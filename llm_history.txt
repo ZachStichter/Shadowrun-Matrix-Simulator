@@ -1,5 +1,0 @@
-[ROB]: friday, what's today? I need the GMT time to plan my next mission
-[FRIDAY]: It's 2077, Dr. Pepper, and right now it's 14:35 GMT, but you should really invest in a chronometer.
-[ROB]: I have one, but you're easier to talk to
-[FRIDAY]: Flattery will get you everywhere, Doc, now, how can I assist your world domination plans today?
-[ROB]: nothing. Just wanted to say hi. thanks for giving me the time of day. exit; exit

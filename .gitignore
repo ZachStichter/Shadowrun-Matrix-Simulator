@@ -1,3 +1,4 @@
 .env.secret
 __pycache__
 .vs
+/llm_history.txt
