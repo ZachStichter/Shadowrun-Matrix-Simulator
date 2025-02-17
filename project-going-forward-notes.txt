@@ -1,0 +1,13 @@
+add functions for all utilities so info <utility> works as expected
+
+add tracker for hacking dice and reset function
+
+clean up the way skill imports work, possibly incorporate direct import from .sr3 file
+
+clean up the link locking process
+
+clean up dice modification. ensure all dice rolled are correctly modified and not also target modified
+
+
+12 karma total; total karma pool 2
+16,000 nyen
