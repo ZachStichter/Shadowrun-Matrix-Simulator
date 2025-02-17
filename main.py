@@ -57,8 +57,8 @@ global LOGGED_IN
 version='0.1.0'
 
 debug = False
-silent_mode = True
-fast_mode = True
+silent_mode = False
+fast_mode = False
 
 TORTOISE = 2
 HOT = -2
@@ -848,7 +848,7 @@ Source: Matrix Refragged, pg 16
     if LOGGED_IN:
         rolls = roll_computer(args)
         modified_rolls = modify_rolls(args, rolls)
-        successes = sum(1 for roll > 4 in modified_rolls)
+        successes = sum(1 for roll in modified_rolls if roll > 4)
 
     else:
         print('User not logged in. Aborting boot')
