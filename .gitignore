@@ -3,4 +3,4 @@ __pycache__
 .vs
 /llm_history.txt
 /.env.secret
-/env
+/tones/temporary_sounds
