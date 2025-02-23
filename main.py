@@ -1,4 +1,3 @@
-# -*- coding: latin-1 -*-
 #################################################################################################################################
 #                                                                                                                               #
 #                                                                                                                               #
@@ -6,6 +5,7 @@
 #                                                                                                                               #
 #                                                                                                                               #
 #################################################################################################################################
+# installed/general modules
 import random
 import os
 import string
@@ -15,13 +15,15 @@ import sys
 from datetime import datetime, timedelta
 import shutil
 
+# local modules
 from tts_manager import tts_manager
 from llm_manager import llm_manager
 from quash_print_output import quash_print_output
 from wrap_to_console import wrap
+import utilities
 
 with quash_print_output():
-    import pygame
+    import pygame # gives some unpretty import messages. would be fine in most applications, but I am delivering in the shell, and I want to strictly control the UX
 
 global TORTOISE
 global HOT
@@ -40,6 +42,7 @@ global debug
 global silent_mode
 global LINK_LOCK
 global LOGGED_IN
+global ACTIVE_UTILITIES_DICTIONARY
 
 #################################################################################################################################
 #                                                                                                                               #
@@ -56,9 +59,9 @@ global LOGGED_IN
 
 version='0.1.0'
 
-debug = False
-silent_mode = False
-fast_mode = False
+debug = True
+silent_mode = True
+fast_mode = True
 
 TORTOISE = 2
 HOT = -2
@@ -67,6 +70,7 @@ IN_LIVE_COMMS = 0
 LOGGED_IN = False
 CONFIGURATION_FILE = os.path.join(os.path.split(__file__)[0],'configuration.env')
 CHARACTER_FILE = os.path.join(os.path.split(__file__)[0],'character.txt')
+UTILITY_FILE = os.path.join(os.path.split(__file__)[0],'utilities.txt')
 TONE_DIRECTORY = os.path.join(os.path.split(__file__)[0],'tones')
 
 def resolve_expression(key, expression):
@@ -132,6 +136,27 @@ def configure_character():
                 attr,val = line.split('=')
                 globals()[attr.upper()] = int(val)
 
+def configure_utilities():
+    '''
+    Add utilities to the character profile by attempting to load a utility file. If no utility file exists, do nothing.
+    '''
+    global UTILITY_FILE
+    global debug
+    global ACTIVE_UTILITIES_DICTIONARY
+    utility_file = UTILITY_FILE
+    try:
+        with open(utility_file,'r') as i:
+            lines = i.readlines()
+        for line in lines:
+            attr,val = line.split('=')
+            attr = f'MAX_{attr.upper()}'
+            globals()[attr] = int(val)
+    except IOError:
+        with open(utility_file,'a+') as i:
+            pass
+        if debug:
+            print(f'Unknown utilities file {utility_file}. Verify that the file is correctly named. A blank utilities file has been created.')
+    ACTIVE_UTILITIES_DICTIONARY = {}
 
 #################################################################################################################################
 #                                                                                                                               #
@@ -346,8 +371,13 @@ def print_command_info(args):
     ah = ActionHandler()
     command_names = args.message
     for command in command_names:
-        print(f'Documentation for command {command}:')
-        ds = ah.return_info(command)
+        if command in ah.actions.keys():
+            print(f'Documentation for command {command}:')
+            ds = ah.return_info(command)
+        elif command in utilities.utilities_dictionary.keys():
+            util = utilities.utilities_dictionary[command](10)
+            ds = util.get_doc()
+            del util
         with wrap():
             print(ds)
     del ah
@@ -815,17 +845,27 @@ Skill Name: Attack an Icon
 Type: General
 Time: Complex
 Skill Check: Cybercombat vs Cybercombat
-Description: This prompt allows the user to target a Visible icon in cybercombat (see “Cybercombat” on page 26). Damage is based on the utility used in the attack (Attack, Slow, etc.), with the icon's Firewall acting as armor. 
+Description: This prompt allows the user to target a Visible icon in cybercombat (see "Cybercombat" on page 26). Damage is based on the utility used in the attack (Attack, Slow, etc.), with the icon's Firewall acting as armor. 
 Note: The Armor, Biofeedback Filter, and Shield utilities can be used to defend users from various types of attacks and damage.
 Requirements: Target Icon is visible
 Source: Matrix Refragged, pg 16
     '''
     global LOGGED_IN
+    global ACTIVE_UTILITIES_DICTIONARY
+    damage_types = []
+    for attack in utilities.attacks_list:
+        if attack in ACTIVE_UTILITIES_DICTIONARY.keys():
+            m = getattr(ACTIVE_UTILITIES_DICTIONARY[attack],'attack')
+            damage_types.append(m())
     if LOGGED_IN:
         print('Setting user icon to visible')
         playsound(ICON_VISIBLE)
         print('Attacking target')
         playsound(ATTACKING_TARGET)
+        if len(damage_types) > 1:
+            print(";\n".join(damage_types))
+        else:
+            print(damage_types[0])
         rolls = roll_cybercombat(args)
         if args.verbose:
             display_dice(rolls)
@@ -849,7 +889,7 @@ Source: Matrix Refragged, pg 16
         rolls = roll_computer(args)
         modified_rolls = modify_rolls(args, rolls)
         successes = sum(1 for roll in modified_rolls if roll > 4)
-
+        boot_utilities(successes,args)
     else:
         print('User not logged in. Aborting boot')
 
@@ -964,6 +1004,8 @@ Source: Matrix Refragged, pg 17, (Types: pg 15)
         rolls = roll_computer(args)
         display_dice(rolls)
         success = compare_dice(rolls,target)
+        if args.force:
+            success=True
 
         if success:
             for _ in range(3):
@@ -1021,6 +1063,10 @@ Description: This prompt allows the user to inspect their virtual surroundings, 
 Source: Matrix Refragged, pg 17
     '''
     global LOGGED_IN
+    global ACTIVE_UTILITIES_DICTIONARY
+    if 'analyze' in ACTIVE_UTILITIES_DICTIONARY.keys():
+        bonus = ACTIVE_UTILITIES_DICTIONARY['analyze'].get_bonus()
+        print(bonus)
     if LOGGED_IN:
         display_dice(roll_computer(args))
     else:
@@ -1032,7 +1078,7 @@ Skill Name: Send Transmission
 Type: General
 Time: Complex
 Skill Check: Computer vs System Rating
-Description: This prompt allows the user to transmit and/or receive any number of datafiles, paydata, or linked datastreams to a designated target icon or Matrix enabled device. A single success is all that's required to establish the transmission connection, which then moves the data at its maximum Data Transfer rate (see “Data Transfer” on page 6) to the intended target. Alternatively, this prompt can be used to establish a real-time connection with allies in the meat world. Users may sustain this connection indefinitely, but suffer a +1TN to all Matrix target numbers. Transmissions can be effected by enemy jamming. The Signal Booster utility can improve a user's chance of successfully utilizing this prompt.
+Description: This prompt allows the user to transmit and/or receive any number of datafiles, paydata, or linked datastreams to a designated target icon or Matrix enabled device. A single success is all that's required to establish the transmission connection, which then moves the data at its maximum Data Transfer rate (see "Data Transfer" on page 6) to the intended target. Alternatively, this prompt can be used to establish a real-time connection with allies in the meat world. Users may sustain this connection indefinitely, but suffer a +1TN to all Matrix target numbers. Transmissions can be effected by enemy jamming. The Signal Booster utility can improve a user's chance of successfully utilizing this prompt.
 Source: Matrix Refragged, pg 17
     '''
     global LOGGED_IN
@@ -1047,13 +1093,15 @@ Skill Name: Terminate Session
 Type: General
 Time: Complex
 Skill Check: Computer vs 4, or Willpower vs 10
-Description: A single success on a basic Computer test is all that's required to utilize this prompt, unless the user is Link-Locked, in which case the user must achieve at least a single success on a Willpower vs 10 test to complete the action. Failing this test results in Dumpshock (see “Dumpshock” on page 27).
+Description: A single success on a basic Computer test is all that's required to utilize this prompt, unless the user is Link-Locked, in which case the user must achieve at least a single success on a Willpower vs 10 test to complete the action. Failing this test results in Dumpshock (see "Dumpshock" on page 27).
 Source: Matrix Refragged, pg 17
     '''
     global LOGGED_IN
     global IN_HOT
     global IN_TORTOISE
+    global ACTIVE_UTILITIES_DICTIONARY
     if LOGGED_IN:
+        ACTIVE_UTILITIES_DICTIONARY = {}
         if args.link_locked:
             dice = roll_willpower(args)
             display_dice(dice)
@@ -1178,7 +1226,7 @@ Type: CPU
 Time: Complex
 Skill Check: Passcodes or Hacking vs Sys/Sec
 Description: This prompt allows the user to Reboot any node associated with the CPU (Including the CPU itself). A successful test is all that's required to complete this action. Rebooting a node causes it to power down as early as the next Combat Turn, and go offline for a number of turns equal to (20 minus the Host's System Rating). 
-Note: Rebooting a node closes pathways connected to that node, and any users operating in the node when it goes offline must make a Computer vs System Rating test, or be dumped from the Matrix (see “Dumpshock” on page 27).
+Note: Rebooting a node closes pathways connected to that node, and any users operating in the node when it goes offline must make a Computer vs System Rating test, or be dumped from the Matrix (see "Dumpshock" on page 27).
 Requirements: Bypass the CPU barrier with either Sleaze or Cybercombat
 Source: Matrix Refragged, pg 19
     '''
@@ -1353,7 +1401,7 @@ Skill Name: Index Users and Scheduling
 Type: SPU
 Time: Complex
 Skill Check: Computer vs System Rating
-Description: This prompt allows the user to call up an index of all users currently associated within the host, as well as their current logon status, and other basic details relevant to their association with the host. Alternatively, the user may call up a scheduling index that associates the host's users with their assigned projects, work calendars, and tasks (especially relevant when inspecting corporate hosts to determine which scientist heads the project you and your runner friends are about to torch). A single success indexes the node, producing an ARO summary of its basic contents. With two successes, Hidden users and projects are revealed (although their details may remain vague or classified). The indexed information is a "read only summary", and the information cannot be edited, duplicated, tapped, or downloaded directly from the SPU (although nothing prohibits deckers from taking notes of specific users, times and dates, and altering the correlating information in the system’s associated data store). The Browse utility can improve a user's chance of successfully utilizing this prompt.
+Description: This prompt allows the user to call up an index of all users currently associated within the host, as well as their current logon status, and other basic details relevant to their association with the host. Alternatively, the user may call up a scheduling index that associates the host's users with their assigned projects, work calendars, and tasks (especially relevant when inspecting corporate hosts to determine which scientist heads the project you and your runner friends are about to torch). A single success indexes the node, producing an ARO summary of its basic contents. With two successes, Hidden users and projects are revealed (although their details may remain vague or classified). The indexed information is a "read only summary", and the information cannot be edited, duplicated, tapped, or downloaded directly from the SPU (although nothing prohibits deckers from taking notes of specific users, times and dates, and altering the correlating information in the system's associated data store). The Browse utility can improve a user's chance of successfully utilizing this prompt.
 Source: Matrix Refragged, pg 21
     '''
     global LOGGED_IN
@@ -1422,56 +1470,32 @@ Source: Matrix Refragged, pg 22
 #     HACKING_POOL -= r
 #     return r
 
-class BaseUtility():
-    def __init__(self):
-        self.name = 'utility'
-        self.rating = 0
-        self.initialized = False
-
-    def tostr(self):
-        return f'{self.name} {self.rating}'
-
-    def boot(self):
-        print(f'Booting utility {self.name} at rating {self.rating}')
-
-class SleazeUtility(BaseUtility):
-    def __init__(self, rating=None):
-        super.__init__()
-        self.maxRating = 6
-        if rating != None:
-            self.rating = rating
-        else:
-            self.rating = self.maxRating
-
-    def sleaze(self):
-        if self.rating > 0:
-            self.rating -= 1
-            print(f'Sleazing past barrier. Current rating {self.rating+1}; new rating {self.rating}')
-            return self.rating
-        else:
-            print('Sleaze rating too low. Cannot sleaze. Aborting.')
-
-    def set_rating(self, rating):
-        self.rating = rating
-
-
-def boot_utilites(successes, args):
+def boot_utilities(successes, args):
     global ACTIVE_UTILITIES_DICTIONARY
-    if ACTIVE_UTILITIES_DICTIONARY not in globals():
-        ACTIVE_UTILITIES_DICTIONARY = {}
     booted = 0
-    utilities_dictionary = {
-        'sleaze':SleazeUtility
-        }
+    utilities_dictionary = utilities.utilities_dictionary
     for arg in args.message:
+        if ':' in arg:
+            arg,rating = arg.split(":")
+        else:
+            rating = None
         if (arg in utilities_dictionary and booted < successes) or args.force:
-            util = utilities_dictionary[arg]
-            ACTIVE_UTILITIES_DICTIONARY[arg] = util
-            booted += 1
+            globalkey = f'MAX_{arg.upper()}'
+            try:
+                util = utilities_dictionary[arg](globals()[globalkey])
+                if rating != None:
+                    method = getattr(util,'set_rating')
+                    method(rating)
+                ACTIVE_UTILITIES_DICTIONARY[arg] = util
+                booted += 1
+            except KeyError as e:
+                print(f'Unable to load utility {arg}. No valid {e} in the utilities.txt file. Add that and restart the shell.')
         elif booted >= successes:
             print(f'Max boot limit reached. Skipping utility {arg}')
         elif arg not in utilities_dictionary:
             print(f'Utility not found {arg}. Skipping.')
+    if debug:
+        print(ACTIVE_UTILITIES_DICTIONARY)
 
 
 
@@ -1595,10 +1619,21 @@ class ActionHandler:
         Performs the action indicated by command with the args passed at command line
         '''
         # Extract keywords from the command
-        command = command.lower().strip()
+        global ACTIVE_UTILITIES_DICTIONARY
+        command = command[0].lower().strip()
         if command in self.actions:
             self.actions[command](*args)
         # Find matching action for the command
+        elif command in ACTIVE_UTILITIES_DICTIONARY:
+            if args[0].message != []:
+                args = args[0]
+                util_command = args.message[0]
+                util_args = args.message[1:]
+            else:
+                util_command = command
+                util_args = []
+            command_action = getattr(ACTIVE_UTILITIES_DICTIONARY[command],util_command)
+            command_action(util_args)
         else:
             return "Invalid command. Try again."
 
@@ -1620,16 +1655,7 @@ def create_parser():
     parser = argparse.ArgumentParser(description=f"Shadowrun Matrix Terminal Adapter v{version}. Allows direct access to the matrix.")
     
     # Example of defining commands with arguments
-    command_choices=['access_node','attack','boot','configure_protections',
-                     'crack_protections','jam_signal','jump','logon','repair',
-                     'scrub_datastream','render','transmit','logout','toggle_visibility',
-                     'trace_signal','configure_io','configure_passcodes','configure_security',
-                     'reboot_node','access_datafile','download','upload','index_data_store',
-                     'siphon_paydata','control_device','index_devices','spoof_datastream',
-                     'tap_datastream','index_users','index_scheduling','system_map','comment',
-                     'host_services','login', 'roll','crash','link_lock','speak', 'query', 
-                     'silence','accelerate','comms', 'info','initiative', 'log', 'autolog','init', 'converse', 'history','listen']
-    parser.add_argument('command', choices=command_choices, help="The command to run")
+    parser.add_argument('command', nargs=1,type=str, help="The command to run")
     parser.add_argument('-v', '--verbose', action='store_true', help="Verbose output")
     parser.add_argument('-d', '--dice', default=0,type=int)
     parser.add_argument('--dice-type', default=6,type=int)
@@ -1642,7 +1668,7 @@ def create_parser():
     parser.add_argument('--matrix', action='store_true')
     parser.add_argument('--friday_tts',action='store_true')
     parser.add_argument('--force',action='store_true')
-    parser.add_argument('message',nargs='*',default='A simple test message')
+    parser.add_argument('message',nargs='*',default=None)
     return parser
 
 # Main function to handle user input and invoke actions
@@ -1657,6 +1683,7 @@ def main():
     if not debug:
         startup()
     configure_character()
+    configure_utilities()
     parser = create_parser()
     
     while True:
@@ -1677,8 +1704,11 @@ def main():
             try:
                 # Parse the user input as command-line arguments
                 args = parser.parse_args(user_input.split())
-                #print(args)
-                action_handler.perform_action(args.command,args)
+                # if debug:
+                #     print(args)
+                returnCode = action_handler.perform_action(args.command,args)
+                if returnCode != None:
+                    print(returnCode)
             except SystemExit:
                 # Handle invalid command or argument format gracefully
                 if 'args' in locals() and args.exit:

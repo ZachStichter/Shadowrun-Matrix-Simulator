@@ -1,0 +1,8 @@
+sleaze=6
+analyze=4
+blackhammer=3
+supression=6
+decrypt=6
+encrypt=6
+evasion=6
+jackpot=6
