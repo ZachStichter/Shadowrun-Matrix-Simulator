@@ -59,9 +59,9 @@ global ACTIVE_UTILITIES_DICTIONARY
 
 version='0.1.0'
 
-debug = True
-silent_mode = True
-fast_mode = True
+debug = False
+silent_mode = False
+fast_mode = False
 
 TORTOISE = 2
 HOT = -2
