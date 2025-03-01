@@ -1699,7 +1699,13 @@ def main():
             break
 
         elif user_input == 'ls':
-            parser.print_help()
+            print('Available Matrix Commands:')
+            # for key in action_handler.actions.keys():
+            #     print(key,'\n')
+            keys = sorted(action_handler.actions.keys())
+            print_string = ', '.join(keys)
+            with wrap():
+                print(print_string)
         else:
             try:
                 # Parse the user input as command-line arguments
