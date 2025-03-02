@@ -88,8 +88,20 @@ if __name__ == '__main__':
     # audio_arr = generation.cpu().numpy().squeeze()
     # sf.write("250201-shadowrun-matrix-emulator/logout.wav", audio_arr, model.config.sampling_rate)
     from env_manager import load_dotenv
+    from os import path
 
+    target_name = ''
+    query = ''
+    
     load_dotenv()
 
     tts = tts_manager()
-    tts.generate("DM, I have an active baby monitor utility. What's our current overwatch level?",'query_overwatch.mp3')
+    directory = path.dirname(__file__)
+    subdir = path.join(directory,'tones')
+    subdir = path.join(subdir,'temporary_sounds')
+    
+    query = f"Warning! Attempting to login in virtual reality - full sensory override... User may be exposed to biofeedback damage..."
+    target_name = 'vr_hot_login'
+    filepath = path.join(subdir,f'{target_name}.mp3')
+    print(filepath)
+    tts.generate(query.strip(),filepath)
