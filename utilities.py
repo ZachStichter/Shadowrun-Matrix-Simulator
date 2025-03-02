@@ -1,5 +1,3 @@
-DECRYPT_BONUS = 0
-
 class BaseUtility():
     '''
 A basic utility class. All other utilities inherit from this. This docstring should not be visible in the live environment.
@@ -36,6 +34,9 @@ A basic utility class. All other utilities inherit from this. This docstring sho
         else:
             self.rating = rating
         print(self.tostr())
+
+    def get_bonus(self):
+        return self.rating
 
 class DegradableUtility(BaseUtility):
     '''
@@ -94,9 +95,7 @@ Source: Matrix Refragged, pg 30
         super().__init__()
         self.rating=rating
         self.name='Analyze'
-        
-    def get_bonus(self):
-        return self.rating
+        self.initialized = True
 
 class ArmorUtility(BaseUtility):
     pass
@@ -229,7 +228,7 @@ Source: Matrix Refragged, pg 30
             for _ in range(count):
                 new_rating = self.degrade()
         else:
-            print(f'Biofeedbac Filterback rating too low ({self.rating}). Cannot filter damage. Aborting')
+            print(f'Biofeedback Filterback rating too low ({self.rating}). Cannot filter damage. Aborting')
 
 class BrowseUtility(BaseUtility):
     pass
@@ -245,7 +244,6 @@ Source: Matrix Refragged, pg 30
         global DECRYPT_BONUS
         super().__init__(maxrating,rating)
         self.name = 'Decrypt'
-        DECRYPT_BONUS = self.rating
 
 class EncryptUtility(BaseUtility):
     pass
