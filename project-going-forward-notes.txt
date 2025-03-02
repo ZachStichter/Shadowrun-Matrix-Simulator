@@ -8,8 +8,6 @@ clean up the way skill imports work, possibly incorporate direct import from .sr
 
 clean up the link locking process
 
-reconfigure access_node to dynamically update the logged in status ([drpepper@pepperPAN] --> [drpepper@child_node])
-
 fix any #todo: objects
 
 12 karma total; total karma pool 2
