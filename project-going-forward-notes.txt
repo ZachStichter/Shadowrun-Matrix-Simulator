@@ -1,5 +1,3 @@
-add functions for all utilities so info <utility> works as expected
-
 add enhanced functionality for all top-level skills
 
 add tracker for hacking dice and reset function
@@ -7,6 +5,8 @@ add tracker for hacking dice and reset function
 clean up the way skill imports work, possibly incorporate direct import from .sr3 file
 
 clean up the link locking process
+
+Add defense actions for each enemy IC action in srd
 
 fix any #todo: objects
 
