@@ -350,19 +350,87 @@ Source: Matrix Refragged, pg
         return bonus
 
 class JamboreeUtility(BaseUtility):
-    pass
+    '''
+Name: Jamboree
+Type: Offensive
+Description: A Jamboree program decreases the user’s target number by its rating while utilizing the Jam Signal prompt to make a target icon eat static.
+Source: Matrix Refragged, pg 31
+    '''
+    def __init__(self,rating,*args):
+        super().__init__()
+        self.name = 'Jamboree'
+        self.rating=rating
 
 class KillSwitchUtility(BaseUtility):
-    pass
+    '''
+Name: Kill Switch
+Type: Offensive
+Description: A Kill Switch program decreases the user’s target number by its rating while utilizing the Crack Protections prompt to disarm a Databombed target. Base Decrypt time = (Encrypt Rating x10 minutes). Failure results in the self-destruction of the target icon.
+Source: Matrix Refragged, pg 31
+    '''
+    def __init__(self,rating,*args):
+        super().__init__()
+        self.name = 'Kill Switch'
+        self.rating=rating
+
 
 class LockOnUtility(BaseUtility):
-    pass
+    '''
+Name: Lock-On
+Type: Offensive, Operational
+Description: The Lock-On program decreases the user’s target number by its rating while utilizing the Trace Signal prompt against a Visible icon. If the user scores even a single success on the test, they establish a Link-Lock with the target.
+Source: Matrix Refragged, pg 31
+    '''
+    def __init__(self,rating,*args):
+        super().__init__()
+        self.name = 'Lock On'
+        self.rating=rating
 
-class MedicUtility(BaseUtility):
-    pass
+class MedicUtility(DegradableUtility):
+    '''
+Name: Medic
+Type: Degradable, Offensive
+Description: A Medic program decreases the user’s target numbers by its rating when utilizing the Repair an Icon prompt. As a Degradable program, Medic is reduced by 1 point after each use.
+Source: Matrix Refragged, pg 31
+    '''
+    def __init__(self,maxrating, rating=None,*args):
+        super().__init__(maxrating,rating)
+        self.name='Medic'
 
-class MirrorsUtility(BaseUtility):
-    pass
+    def medic(self,*args):
+        new_rating = self.degrade()
+        if new_rating >= 0:
+            print(f'Enabling Mobile emergency diagnostic immune classifier (M.E.D.I.C.). Current rating {new_rating+1}; new rating {new_rating}')
+        else:
+            print(f'Medic rating too low ({self.rating}). Cannot boost healing.')
+    
+    def get_bonus(self):
+        bonus = self.rating
+        self.medic()
+        return bonus
+
+class MirrorsUtility(DegradableUtility):
+    '''
+Name: Mirrors
+Type: Degradable
+Description: A Mirrors program decreases the user’s target number by its rating while being scrutinized by a System Sweep, or the Authenticate ability of some agents (see “Agent Special Abilities” on page 38). The program works by spamming a wave of token icons into the system. The tokens appear to lend credibility to a user’s presence, and appear as falsified employment records, bogus certifications, registries of forged timestamps, counterfeit payroll records, and the like. Upon detailed inspection the tokens are clearly deceptive, but the ruse is often good enough to avoid the scrutiny of many hostile IC. As a Degradable program, Mirrors is reduced by 1 point after each use.
+Source: Matrix Refragged, pg 31
+    '''
+    def __init__(self,maxrating, rating=None,*args):
+        super().__init__(maxrating,rating)
+        self.name='Mirrors'
+
+    def medic(self,*args):
+        new_rating = self.degrade()
+        if new_rating >= 0:
+            print(f'Detecting system sweep. Deploying countermeasures. Current rating {new_rating+1}; new rating {new_rating}')
+        else:
+            print(f'Mirrors rating too low ({self.rating}). Cannot disguise.')
+    
+    def get_bonus(self):
+        bonus = self.rating
+        self.medic()
+        return bonus
 
 class ReadWriteUtility(BaseUtility):
     pass
