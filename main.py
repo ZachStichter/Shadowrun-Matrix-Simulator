@@ -293,7 +293,7 @@ def toggle_silence(args):
         if args.verbose:
             print('Setting silent mode to true')
 
-def get_adjusted_rating(orig,pen):
+def get_adjusted_rating(orig,pen,bonus=0):
     '''
     For a given original rating, calculate the modified rating, taking into account user penalties, login mode, and whether the user is in real time communication with party members.
     '''
@@ -303,7 +303,7 @@ def get_adjusted_rating(orig,pen):
     global IN_HOT
     global LIVE_COMMS
     global IN_LIVE_COMMS
-    calc = orig+pen+TORTOISE*IN_TORTOISE+HOT*IN_HOT+LIVE_COMMS*IN_LIVE_COMMS
+    calc = orig+pen+TORTOISE*IN_TORTOISE+HOT*IN_HOT+LIVE_COMMS*IN_LIVE_COMMS-bonus
     return max(calc,2)
 
 def get_attribute(globalAttribute):
@@ -519,6 +519,8 @@ def get_bonus(utility_name):
     global ACTIVE_UTILITIES_DICTIONARY
     if utility_name in ACTIVE_UTILITIES_DICTIONARY.keys():
         return ACTIVE_UTILITIES_DICTIONARY[utility_name].get_bonus()
+    else:
+        return 0
 
 #################################################################################################################################
 #                                                                                                                               #
@@ -865,14 +867,18 @@ Penalty: Failing this test increases the user's Overwatch by 1 point.
 Source: Matrix Refragged, pg 16
     '''
     global LOGGED_IN
+    global NODE_LOCATION
+    bonus = get_bonus('exploit')
     if LOGGED_IN:
-        print(f'Accessing node {"".join(random.choice(string.ascii_letters + string.digits) for _ in range(10)).upper()}')
-        rolls = roll_hacking
-        target = get_adjusted_rating(args.system_rating,args.penalty)
+        candidate_node = "".join(random.choice(string.ascii_letters + string.digits) for _ in range(10)).upper()
+        print(f'Accessing node {candidate_node}')
+        rolls = roll_hacking(args)
+        target = get_adjusted_rating(args.system_rating,args.penalty,bonus)
         success = compare_dice(rolls, target)
         if success:
             print('Node accessed. Falsified mark created.')
             playsound(SUCCESS)
+            NODE_LOCATION = candidate_node
         else:
             print('Node access failure. Unable to create falsified mark. ')
     else:
@@ -1754,6 +1760,8 @@ def main(*args):
     Main event loop
     '''
     global LOGGED_IN
+    global NODE_LOCATION
+    NODE_LOCATION = 'pepperPAN'
     from env_manager import load_dotenv
     load_dotenv()
     configure_globals()
@@ -1769,7 +1777,7 @@ def main(*args):
     while True:
         # Accept structured user input
         if LOGGED_IN:
-            input_string = "[drpepper@pepperPAN ~]$ "
+            input_string = f"[drpepper@{NODE_LOCATION} ~]$ "
         else:
             input_string = "> "
         user_input = input(input_string).lower()
