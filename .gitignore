@@ -5,3 +5,4 @@ __pycache__
 /.env.secret
 /tones/temporary_sounds
 /Shadowrun-Env
+clean_description.py
