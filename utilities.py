@@ -221,6 +221,7 @@ Source: Matrix Refragged, pg 30
         
 
     def filter(self,count,*args):
+        count = int(count[0])
         if count - self.rating >= 0:
             print(f'Filtering biofeedback damage. Current rating {self.rating}; new rating {self.rating-count}')
             for _ in range(count):
