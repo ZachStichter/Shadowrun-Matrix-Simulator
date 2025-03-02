@@ -23,7 +23,7 @@ A basic utility class. All other utilities inherit from this. This docstring sho
         else:
             rating = int(rating)
         if rating > self.theoreticalMax:
-            print('Rating greater than theoretical maximum. Overwrite settings?')
+            print(f'Rating for {self.name} greater than theoretical maximum. Overwrite settings?')
             result = ''
             while result.lower().strip() not in ['y','n']:
                 result=input('[y/n]')
@@ -111,7 +111,7 @@ Source: Matrix Refragged, pg 30
 
     def armor(self,count,*args):
         count = int(count[0])
-        if count - self.rating >= 0:
+        if self.rating - count >= 0:
             print(f'Blocking overload damage. Current rating {self.rating}; new rating {self.rating-count}')
             for _ in range(count):
                 new_rating = self.degrade()
@@ -130,39 +130,53 @@ Source: Matrix Refragged, pg 30
         self.rating=rating
         self.dmg_type_dict={'lol':{
                                 'typ':'overload',
-                                'lvl':'light'
+                                'lvl':'light',
+                                'name': 'Light Overload'
                                     },
                             'mol':{
                                 'typ':'overload',
-                                'lvl':'moderate'
+                                'lvl':'moderate',
+                                'name':'Moderate Overload'
                                 },
                             'sol':{
                                 'typ':'overload',
-                                'lvl':'serious'},
+                                'lvl':'serious',
+                                'name':'Serious Overload'
+                                },
                             'dol':{
                                 'typ':'overload',
-                                'lvl':'deadly'
+                                'lvl':'deadly',
+                                'name':'Deadly Overload'
                                 },
                             'nosebleed':{
                                 'typ':'biofeedback',
-                                'lvl':'light'
+                                'lvl':'light',
+                                'name':'Nosebleed'
                                 },
                             'blackout':{
                                 'typ':'biofeedback',
-                                'lvl':'light'
+                                'lvl':'moderate',
+                                'name':'Blackout'
                                 },
                             'killjoy':{
                                 'typ':'biofeedback',
-                                'lvl':'severe'
+                                'lvl':'severe',
+                                'name':'Killjoy'
                                 },
                             'blackhammer':{
                                 'typ':'biofeedback',
-                                'lvl':'deadly'
-                                }
+                                'lvl':'deadly',
+                                'name':'Black Hammer'
+                                },
+                            'slow':{
+                                'typ':'initiative',
+                                'lvl':'special',
+                                'name':'slow'
                             }
-        self.name=name
-        self.dmg_type = self.dmg_type_dict[self.name]['typ']
-        self.dmg_level = self.dmg_type_dict[self.name]['lvl']
+                            }
+        self.name=self.dmg_type_dict[name]['name']
+        self.dmg_type = self.dmg_type_dict[name]['typ']
+        self.dmg_level = self.dmg_type_dict[name]['lvl']
 
     def attack(self, *args):
         return f'Dealing {self.dmg_level} {self.dmg_type} with a target number of {self.rating}'
@@ -207,6 +221,20 @@ class BlackhammerDamage(AttackUtility):
         super().__init__(rating, 'blackhammer', *args)
         self.__doc__ = super().__doc__
 
+class SlowDamage(AttackUtility):
+    '''
+Name: Slow
+Type: Combat
+Description: Slow is a specialized combat program designed to bog down an icon in sluggish or harmful code, causing the target’s Initiative score to degrade. When a user utilizes Slow in conjunction with the Attack an Icon prompt, they may opt to reduce the target icon’s Initiative score by 3 points for each net success generated on the test (instead of applying them to stage damage) However, should the target icon win the Cybercombat test, it may choose to inflict its own damage, as normal). Initiative degraded in this way may affect subsequent combat phases, and is lost until Initiative is rerolled at the top of the next Combat Turn. Icon’s whose Initiative is reduced to zero within a single turn crash, dumping their users from the Matrix, if applicable, and leaving their icon “frozen” or running in place before they inevitably fade from the Matrix.
+Source: Matrix Refragged, pg 
+    '''
+    def __init__(self,*args):
+        super().__init__(0,'slow',*args)
+
+    def attack(self):
+        return f"Dealing {self.dmg_level} {self.dmg_type} damage. All successes reduce the target's initiative by 3."
+
+
 class BabyMonitorUtility(DegradableUtility):
     '''
 Utility Name: Baby Monitor
@@ -216,9 +244,8 @@ Source: Matrix Refragged, pg 30
     '''
     def __init__(self, maxrating,rating=None,*args):
         super().__init__(maxrating,rating)
-        self.name = 'Monitor'
+        self.name = 'Baby Monitor'
         
-
     def baby(self,*args):
         new_rating = self.degrade()
         if new_rating >= 0:
@@ -236,12 +263,12 @@ Source: Matrix Refragged, pg 30
     '''
     def __init__(self, maxrating,rating=None,*args):
         super().__init__(maxrating,rating)
-        self.name = 'Filter'
+        self.name = 'Biofeedback Filtering'
         
 
     def filter(self,count,*args):
         count = int(count[0])
-        if count - self.rating >= 0:
+        if self.rating - count >= 0:
             print(f'Filtering biofeedback damage. Current rating {self.rating}; new rating {self.rating-count}')
             for _ in range(count):
                 new_rating = self.degrade()
@@ -420,7 +447,7 @@ Source: Matrix Refragged, pg 31
         super().__init__(maxrating,rating)
         self.name='Mirrors'
 
-    def medic(self,*args):
+    def mirrors(self,*args):
         new_rating = self.degrade()
         if new_rating >= 0:
             print(f'Detecting system sweep. Deploying countermeasures. Current rating {new_rating+1}; new rating {new_rating}')
@@ -429,38 +456,124 @@ Source: Matrix Refragged, pg 31
     
     def get_bonus(self):
         bonus = self.rating
-        self.medic()
+        self.mirrors()
         return bonus
 
 class ReadWriteUtility(BaseUtility):
-    pass
+    '''
+Name: Read/Write
+Type: Offensive
+Description: The Read/Write program decreases the user’s target number by its rating while utilizing any Datafile prompts, including Access, Duplicate/Download, or Edit/Upload prompts.
+Source: Matrix Refragged, pg 31
+    '''
+    def __init__(self,rating,*args):
+        super().__init__()
+        self.name = 'Read/Write'
+        self.rating=rating
 
-class RedirectUtility(BaseUtility):
-    pass
+class RedirectUtility(DegradableUtility):
+    '''
+Name: Redirect
+Type: Defensive, Degradable
+Description: A Redirect program increases the target number by its rating, for enemy icons attempting to target the user with the Trace Signal prompt. As a Degradable program, Redirect is reduced by 1 point after each use.
+Source: Matrix Refragged, pg 31
+    '''
+    def __init__(self,maxrating, rating=None,*args):
+        super().__init__(maxrating,rating)
+        self.name='Redirect'
+
+    def redirect(self,*args):
+        new_rating = self.degrade()
+        if new_rating >= 0:
+            print(f"Detecting signal trace. Deploying countermeasures. Current rating {new_rating+1}; new rating {new_rating}.\nIncrease the opponent's target number by +{new_rating+1}")
+        else:
+            print(f'Redirect rating too low ({self.rating}). Cannot counter signal trace.')
 
 class SaboteurUtility(BaseUtility):
-    pass
+    '''
+Name: Saboteur
+Type: Operational
+Description: A Saboteur program is an operational program designed to Databomb a datafile or similar icon. Whenever the user successfully utilizes the Configure Protections prompt, they may choose to Databomb an unprotected target up to the rating of the utility. A single success is all that’s required to complete the action.
+Source: Matrix Refragged, pg 32
+    '''
+    def __init__(self,rating,*args):
+        super().__init__()
+        self.name = 'Saboteur'
+        self.rating=rating
 
-class ShieldUtility(BaseUtility):
-    pass
+    def databomb(self):
+        print(f'Attempting to Databomb icon. One success means this icon can be databombed up to rating {self.rating}.')
+
+
+class ShieldUtility(DegradableUtility):
+    '''
+Name: Shield
+Type: Operational, Degradable
+Description: A Shield program may be used to mitigate the special attacks of many IC Agents that target the user’s hardware (such as their MPCP, Memory, utilities, or utility slots). Instead of applying the degradation to the user’s hardware, the user may opt instead to Degrade their Shield utility on a point-for-point basis.
+Source: Matrix Refragged, pg 
+    '''
+    def __init__(self, maxrating,rating=None,*args):
+        super().__init__(maxrating,rating)
+        self.name = 'Shield'
+        
+
+    def shield(self,count,*args):
+        count = int(count[0])
+        if self.rating - count >= 0:
+            print(f'Blocking hardware damage. Current rating {self.rating}; new rating {self.rating-count}')
+            for _ in range(count):
+                new_rating = self.degrade()
+        else:
+            print(f'Shield rating too low ({self.rating}). Cannot absorb damage. Aborting')
 
 class SignalBoostUtility(BaseUtility):
-    pass
+    '''
+Name: Signal Booster
+Type: Offensive
+Description: A Signal Booster program decreases the user’s target number by its rating while utilizing the Send Transmission prompt.
+Source: Matrix Refragged, pg 32
+    '''
+    def __init__(self,rating,*args):
+        super().__init__()
+        self.name = 'Signal Booster'
+        self.rating=rating
 
-class SlowUtility(BaseUtility):
-    pass
+class SmokeScreenUtility(DegradableUtility):
+    '''
+Name: Smoke Screen
+Type: Defensive, Degradable
+Description: A Smoke Screen program increases the target number by its current rating for enemy icons attempting to target the user with the Search and Render prompt. As a Degradable program, Smoke Screen is reduced by 1 point after each use.
+Source: Matrix Refragged, pg 32
+    '''
+    def __init__(self,maxrating, rating=None,*args):
+        super().__init__(maxrating,rating)
+        self.name='Smoke Screen'
 
-class SmokeScreenUtility(BaseUtility):
-    pass
+    def smokescreen(self,*args):
+        new_rating = self.degrade()
+        if new_rating >= 0:
+            print(f"Detecting search and render prompt. Deploying countermeasures. Current rating {new_rating+1}; new rating {new_rating}.\nIncrease the opponent's target number by +{new_rating+1}")
+        else:
+            print(f'Smoke screen rating too low ({self.rating}). Cannot counter search and render.')
 
 class SnoopUtility(BaseUtility):
-    pass
+    '''
+Name: Snoop
+Type: Offensive
+Description: A Snoop program decreases the user’s target numbers by its rating while utilizing the Tap Datastream, or Spoof Datastream prompts.
+Source: Matrix Refragged, pg 32
+    '''
+    def __init__(self,rating,*args):
+        super().__init__()
+        self.name = 'Snoop'
+        self.rating=rating
 
 class SupressionUtility(DegradableUtility):
     '''
 Utility Name: Supression
 Type: Degradable, Operational
 Description: The Suppression program may be utilized whenever a user crashes an icon. Instead of accruing a point of Overwatch, the user may choose to "suppress the crash" (see "Crash Suppression" on page 26). As a Degradable program, Suppression is reduced by 1 point after each use.
+Source: Matrix Refragged, pg 32
     '''
     def __init__(self,maxrating,rating=None,*args):
         super().__init__(maxrating,rating)
@@ -497,7 +610,7 @@ utilities_dictionary = {
         'saboteur':SaboteurUtility,
         'shield':ShieldUtility,
         'signal':SignalBoostUtility,
-        'slow':SlowUtility,
+        'slow':SlowDamage,
         'smokescreen':SmokeScreenUtility,
         'snoop':SnoopUtility,
         'supression':SupressionUtility,
@@ -512,7 +625,7 @@ utilities_dictionary = {
         'blackhammer':BlackhammerDamage
         }
 
-attacks_list = ['lol','mol','sol','dol','nosebleed','blackout','killjoy','blackhammer']
+attacks_list = ['lol','mol','sol','dol','nosebleed','blackout','killjoy','blackhammer','slow']
 
 if __name__ == '__main__':
     temp = SleazeUtility(6)

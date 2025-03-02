@@ -92,4 +92,4 @@ if __name__ == '__main__':
     load_dotenv()
 
     tts = tts_manager()
-    tts.generate('hi','file.mp3')
+    tts.generate("DM, I have an active baby monitor utility. What's our current overwatch level?",'query_overwatch.mp3')

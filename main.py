@@ -23,6 +23,7 @@ from wrap_to_console import wrap
 import utilities
 import common_functions
 import defense_actions
+from audio_distorter import distort
 
 with quash_print_output():
     import pygame # gives some unpretty import messages. would be fine in most applications, but I am delivering in the shell, and I want to strictly control the UX
@@ -577,7 +578,6 @@ def play_prompt(prompt):
     '''
     Queries a local instance of a neural TTS as described in the tts_manager package and plays the response.
     '''
-    from audio_distorter import distort
     filename = "".join([random.choice(string.digits+string.ascii_letters) for _ in range(16)])+".mp3"
     filepath = os.path.join(GENERATED_TONE_DIRECTORY,filename)
     print(f'FRIDAY v{version}. Query received. Generating audio response.')
@@ -703,26 +703,27 @@ def get_longitude():
     '''
     return f'{(random.random()*(-122.373413+122.248142)-122.248142):.9}'
 
-def display_dice(dice, bonus=None):
+def display_dice(dice, bonus=-1):
     '''
     Print the result of a set of dice rolls and play audio telling the user the result
     '''
-    if bonus:
+    if bonus > 0:
         with wrap():
             print(f'These rolls include a bonus of {bonus}. If this roll is being used to overcome a target number, make sure the bonus does not effectively lower the target number below 2.')
     print(sorted(dice,reverse=True))
-    playsound(BEST_ROLL)
-    best = max(dice)
-    numbers = os.path.join(TONE_DIRECTORY, 'numerals')
-    if best < 20:
-        path = os.path.join(numbers,f'{int(best):02}.mp3')
-        playsound(path)
-    else:
-        tens = str(best)[0]
-        ones = str(best)[1]
-        path = os.path.join(numbers,f'{int(tens)*10:02}.mp3')
-        playsound(path)
-        path = os.path.join(numbers,f'{int(ones):02}.mp3')
+    with distort(function=playsound,retain_modified=False) as dplaysound:
+        dplaysound(BEST_ROLL)
+        best = max(dice)
+        numbers = os.path.join(TONE_DIRECTORY, 'numerals')
+        if best < 20:
+            path = os.path.join(numbers,f'{int(best):02}.mp3')
+            dplaysound(path)
+        else:
+            tens = str(best)[0]
+            ones = str(best)[1]
+            path = os.path.join(numbers,f'{int(tens)*10:02}.mp3')
+            dplaysound(path)
+            path = os.path.join(numbers,f'{int(ones):02}.mp3')
 
 def system_crash(args, msg='System crash. Prepare for dumpshock.'):
     '''
@@ -870,7 +871,7 @@ Source: Matrix Refragged, pg 16
     '''
     global LOGGED_IN
     global NODE_LOCATION
-    bonus = common_functions.get_bonus('exploit')
+    bonus = common_functions.get_bonus('exploit',ACTIVE_UTILITIES_DICTIONARY)
     if LOGGED_IN:
         candidate_node = "".join(random.choice(string.ascii_letters + string.digits) for _ in range(10)).upper()
         print(f'Accessing node {candidate_node}')
@@ -911,8 +912,11 @@ Source: Matrix Refragged, pg 16
         playsound(ATTACKING_TARGET)
         if len(damage_types) > 1:
             print(";\n".join(damage_types))
-        else:
+        elif len(damage_types)==1:
             print(damage_types[0])
+        else:
+            print('No attack utility loaded. Aborting.')
+            return
         rolls = roll_cybercombat(args)
         if args.verbose:
             display_dice(rolls)
@@ -953,7 +957,15 @@ Source: Matrix Refragged, pg 16
 '''
     global LOGGED_IN
     if LOGGED_IN:
-        display_dice(modify_rolls(args,roll_computer(args)))
+        if 'saboteur' in ACTIVE_UTILITIES_DICTIONARY:
+            user_response = ''
+            while user_response not in ['y','n']:
+                user_response = input('Saboteur utility active. Create databomb at this location? ').strip()
+            if user_response == 'y':
+                ACTIVE_UTILITIES_DICTIONARY['saboteur'].databomb()
+        rolls = roll_computer(args)
+        modified_rolls = modify_rolls(args,rolls)
+        display_dice(modified_rolls)
     else:
         print('User not logged in. Aborting configuration')
 
@@ -970,12 +982,14 @@ Source: Matrix Refragged, pg 16
     '''
     global LOGGED_IN
     if LOGGED_IN:
-        if args.message[0] in ['decrypt', 'killswitch']:
+        if (len(args.message)>0) and (args.message[0] in ['decrypt', 'killswitch']):
             print(f'Cracking protections with {args.message[0]} utility.')
-            bonus = common_functions.get_bonus(args.message[0])
+            bonus = common_functions.get_bonus(args.message[0],ACTIVE_UTILITIES_DICTIONARY)
+        else:
+            bonus = 0
         dice = roll_hacking(args)
         modified_dice = modify_rolls(args,dice,bonus)
-        display_dice(modified_dice)
+        display_dice(modified_dice,bonus)
     else:
         print('User not logged in. Aborting decryption')
     
@@ -991,10 +1005,10 @@ Source: Matrix Refragged, pg 16
     '''
     global LOGGED_IN
     if LOGGED_IN:
-        bonus = common_functions.get_bonus('jamboree')
+        bonus = common_functions.get_bonus('jamboree',ACTIVE_UTILITIES_DICTIONARY)
         rolls = roll_computer(args)
         modified_rolls = modify_rolls(args, rolls, bonus)
-        display_dice(modified_rolls)
+        display_dice(modified_rolls,bonus)
     else:
         print('User not logged in. Aborting jamming')
 
@@ -1089,7 +1103,7 @@ Source: Matrix Refragged, pg 17
     '''
     global LOGGED_IN
     if LOGGED_IN:
-        bonus = common_functions.get_bonus('medic')
+        bonus = common_functions.get_bonus('medic',ACTIVE_UTILITIES_DICTIONARY)
         rolls = roll_computer(args)
         modified_rolls = modify_rolls(args,rolls,bonus)
         display_dice(modified_rolls,bonus)
@@ -1108,6 +1122,9 @@ Source: Matrix Refragged, pg 17
     '''
     global LOGGED_IN
     if LOGGED_IN:
+        if 'baby' in ACTIVE_UTILITIES_DICTIONARY:
+            ACTIVE_UTILITIES_DICTIONARY['baby'].baby()
+            
         display_dice(modify_rolls(args,roll_hacking(args)))
     else:
         print('User not logged in. Aborting scrub')
@@ -1123,11 +1140,11 @@ Source: Matrix Refragged, pg 17
     '''
     global LOGGED_IN
     global ACTIVE_UTILITIES_DICTIONARY
-    bonus = common_functions.get_bonus('analyze')
+    bonus = common_functions.get_bonus('analyze',ACTIVE_UTILITIES_DICTIONARY)
     if LOGGED_IN:
         rolls = roll_computer(args)
         modified_rolls = modify_rolls(args,rolls,bonus)
-        display_dice(modified_rolls)
+        display_dice(modified_rolls,bonus)
     else:
         print('User not logged in. Aborting search')
 
@@ -1142,7 +1159,10 @@ Source: Matrix Refragged, pg 17
     '''
     global LOGGED_IN
     if LOGGED_IN:
-        display_dice(modify_rolls(args,roll_computer(args)))
+        bonus = common_functions.get_bonus('signal',ACTIVE_UTILITIES_DICTIONARY)
+        rolls = roll_computer(args)
+        modified_dice = modify_rolls(args,rolls,bonus)
+        display_dice(modified_dice,bonus)
     else:
         print('User not logged in. Aborting transmission')
 
@@ -1198,7 +1218,7 @@ Source: Matrix Refragged, pg 17
     if LOGGED_IN:
         print('Toggling icon visiblity')
         playsound(VISIBILITY_TOGGLE)
-        dice = roll_dice(COMPUTER+args.dice)
+        dice = roll_computer(args)
         display_dice(dice)
     else:
         print('User not logged in. Aborting visibility toggle.')
@@ -1220,12 +1240,12 @@ Source: Matrix Refragged, pg 18
     '''
     global LOGGED_IN
     if LOGGED_IN:
-        bonus = common_functions.get_bonus('lockon')
+        bonus = common_functions.get_bonus('lockon',ACTIVE_UTILITIES_DICTIONARY)
         if bonus > 0:
             print('Lock-On utility activated. Attempting to link lock target. Any successes establish link lock.')
         rolls = roll_computer(args)
         modified_rolls = modify_rolls(args,rolls,bonus)
-        display_dice(modified_rolls)
+        display_dice(modified_rolls,bonus)
     else:
         print('User not logged in. Aborting trace')
 
@@ -1240,7 +1260,6 @@ Penalty: Failing this test increases the user's Overwatch by 1 point.
 Requirements: Bypass the CPU barrier with either Sleaze or Cybercombat
 Source: Matrix Refragged, pg 18
     '''
-
     global LOGGED_IN
     if LOGGED_IN:
         display_dice(modify_rolls(args,roll_hacking(args)))
@@ -1311,7 +1330,10 @@ Source: Matrix Refragged, pg 19
     '''
     global LOGGED_IN
     if LOGGED_IN:
-        display_dice(modify_rolls(args,roll_computer(args)))
+        bonus = common_functions.get_bonus('io',ACTIVE_UTILITIES_DICTIONARY)
+        rolls = roll_computer(args)
+        modified_rolls = modify_rolls(args,rolls,bonus)
+        display_dice(modified_rolls,bonus)
     else:
         print('User not logged in. Aborting read operation')
 
@@ -1327,7 +1349,10 @@ Source: Matrix Refragged, pg 19
     '''
     global LOGGED_IN
     if LOGGED_IN:
-        display_dice(modify_rolls(args,roll_hacking(args)))
+        bonus = common_functions.get_bonus('io',ACTIVE_UTILITIES_DICTIONARY)
+        rolls = roll_hacking(args)
+        modified_rolls = modify_rolls(args,rolls,bonus)
+        display_dice(modified_rolls,bonus)
     else:
         print('User not logged in. Aborting download')
 
@@ -1344,7 +1369,10 @@ Source: Matrix Refragged, pg 19
     '''
     global LOGGED_IN
     if LOGGED_IN:
-        display_dice(modify_rolls(args,roll_hacking(args)))
+        bonus = common_functions.get_bonus('io',ACTIVE_UTILITIES_DICTIONARY)
+        rolls = roll_hacking(args)
+        modified_rolls = modify_rolls(args,rolls,bonus)
+        display_dice(modified_rolls,bonus)
     else:
         print('User not logged in. Aborting upload')
 
@@ -1358,11 +1386,11 @@ Description: This prompt calls up an ARO index of all datafiles (or other digita
 Source: Matrix Refragged, pg 19
     '''
     global LOGGED_IN
-    bonus = common_functions.get_bonus('browse')
+    bonus = common_functions.get_bonus('browse',ACTIVE_UTILITIES_DICTIONARY)
     if LOGGED_IN:
         rolls = roll_computer(args)
         modified_rolls = modify_rolls(args,rolls,bonus)
-        display_dice(modified_rolls)
+        display_dice(modified_rolls,bonus)
     else:
         print('User not logged in. Aborting index')
 
@@ -1377,7 +1405,7 @@ Penalty: Failing this test increases the user's Overwatch by 1 point.
 Source: Matrix Refragged, pg 20
     '''
     global LOGGED_IN
-    bonus = common_functions.get_bonus('jackpot')
+    bonus = common_functions.get_bonus('jackpot',ACTIVE_UTILITIES_DICTIONARY)
     if LOGGED_IN:
         print('Siphoning paydata.')
         blip()
@@ -1386,7 +1414,7 @@ Source: Matrix Refragged, pg 20
         print('Downloading siphoned data.')
         rolls = roll_hacking(args)
         modified_rolls = modify_rolls(args,rolls,bonus)
-        display_dice(modified_rolls)
+        display_dice(modified_rolls,bonus)
     else:
         print('User not logged in. Aborting download')
 
@@ -1414,11 +1442,11 @@ Skill Check: Computer vs System Rating
 Description: This prompt allows the user to call up an ARO index of all icons, or subscribed devices slaved to the system's PAN, or otherwise controlled by the node. With a single success the user indexes the content of the node, listing the names and critical details of every Visible icon associated with the node. With two successes, Hidden device icons, as well as their associated datastreams and sub-systems become visible to the user (ie. the SANs of the subscribed devices). The Browse utility can improve a user's chance of successfully utilizing this prompt.
     '''
     global LOGGED_IN
-    bonus = common_functions.get_bonus('browse')
+    bonus = common_functions.get_bonus('browse',ACTIVE_UTILITIES_DICTIONARY)
     if LOGGED_IN:
         rolls = roll_computer(args)
         modified_rolls = modify_rolls(args,rolls,bonus)
-        display_dice(modified_rolls)
+        display_dice(modified_rolls,bonus)
     else:
         print('User not logged in. Aborting index')
 
@@ -1435,7 +1463,10 @@ Source: Matrix Refragged, pg 20
     '''
     global LOGGED_IN
     if LOGGED_IN:
-        display_dice(modify_rolls(args,roll_hacking(args)))
+        bonus = common_functions.get_bonus('snoop',ACTIVE_UTILITIES_DICTIONARY)
+        rolls = roll_hacking(args)
+        modified_rolls = modify_rolls(args,rolls,bonus)
+        display_dice(modified_rolls,bonus)
     else:
         print('User not logged in. Aborting spoof')
 
@@ -1450,10 +1481,12 @@ Requirements: Unprotected datastream or successful Crack Protections test.
 Penalty: Failing this test increases the user's Overwatch by 1 point.
 Source: Matrix Refragged, pg 20
     '''
-
     global LOGGED_IN
     if LOGGED_IN:
-        display_dice(modify_rolls(args,roll_hacking(args)))
+        bonus = common_functions.get_bonus('snoop',ACTIVE_UTILITIES_DICTIONARY)
+        rolls = roll_hacking(args)
+        modified_rolls = modify_rolls(args,rolls,bonus)
+        display_dice(modified_rolls,bonus)
     else:
         print('User not logged in. Aborting tap')
 
@@ -1467,11 +1500,11 @@ Description: This prompt allows the user to call up an index of all users curren
 Source: Matrix Refragged, pg 21
     '''
     global LOGGED_IN
-    bonus = common_functions.get_bonus('browse')
+    bonus = common_functions.get_bonus('browse',ACTIVE_UTILITIES_DICTIONARY)
     if LOGGED_IN:
         rolls = roll_computer(args)
         modified_rolls = modify_rolls(args,rolls,bonus)
-        display_dice(modified_rolls)
+        display_dice(modified_rolls,bonus)
     else:
         print('User not logged in. Aborting index')
 
@@ -1485,11 +1518,11 @@ Description: This prompt allows the user to call up an index of all users curren
 Source: Matrix Refragged, pg 21
     '''
     global LOGGED_IN
-    bonus = common_functions.get_bonus('browse')
+    bonus = common_functions.get_bonus('browse',ACTIVE_UTILITIES_DICTIONARY)
     if LOGGED_IN:
         rolls = roll_computer(args)
         modified_rolls = modify_rolls(args,rolls,bonus)
-        display_dice(modified_rolls)
+        display_dice(modified_rolls,bonus)
     else:
         print('User not logged in. Aborting index')
 
@@ -1716,11 +1749,7 @@ class ActionHandler:
         # Find matching action for the command
         elif command in ACTIVE_UTILITIES_DICTIONARY:
             if args[0].message != []:
-                if args[0].command in ['attack']:
-                    args = args[0]
-                    util_command = args.message[0]
-                    util_args = args.message[1:]
-                elif args[0].message[0] in ['set_rating']:
+                if args[0].message[0] in ['set_rating']:
                     args = args[0]
                     util_command = args.message[0]
                     util_args = args.message[1:]
