@@ -1663,9 +1663,14 @@ class ActionHandler:
         # Find matching action for the command
         elif command in ACTIVE_UTILITIES_DICTIONARY:
             if args[0].message != []:
-                args = args[0]
-                util_command = args.message[0]
-                util_args = args.message[1:]
+                if args[0].command in ['attack']:
+                    args = args[0]
+                    util_command = args.message[0]
+                    util_args = args.message[1:]
+                else:
+                    args = args[0]
+                    util_command = args.command[0]
+                    util_args = args.message
             else:
                 util_command = command
                 util_args = []
@@ -1757,7 +1762,7 @@ def main(*args):
                print(f'Unknown error occurred: {e}')
 
 if __name__ == "__main__":
-    if sys.argv[:-1] == 'admin':
+    if sys.argv[-1] == 'admin':
         main('admin')
     else:
         main()
