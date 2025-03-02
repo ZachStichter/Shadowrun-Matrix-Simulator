@@ -188,8 +188,25 @@ class BlackhammerDamage(AttackUtility):
         super().__init__(rating, 'blackhammer', *args)
         self.__doc__ = super().__doc__
 
-class BabyMonitorUtility(BaseUtility):
-    pass
+class BabyMonitorUtility(DegradableUtility):
+    '''
+Utility Name: Baby Monitor
+Type: Degradable, Operational
+Description: Baby Monitor is an operational program designed to allow a user to get a peek at their current Overwatch level. Whenever the user activates the Scrub Datastream prompt, the GM should relay the number of boxes accrued as Overwatch in terms of wound levels (Light, Moderate, Serious, etc). As a Degradable program, Baby Monitor is reduced by 1 point after each use.
+Source: Matrix Refragged, pg 30
+    '''
+    def __init__(self, maxrating,rating=None,*args):
+        super().__init__(maxrating,rating)
+        self.name = 'Monitor'
+        
+
+    def monitor(self,*args):
+        new_rating = self.degrade()
+        if new_rating >= 0:
+            print(f'Querying Overwatch. Current rating {new_rating+1}; new rating {new_rating}')
+        else:
+            print('Monitor rating too low. Cannot monitor. Aborting')
+
 
 class BiofeedbackFilteringUtility(BaseUtility):
     pass
