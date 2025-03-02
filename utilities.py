@@ -79,7 +79,7 @@ Source: Matrix Refragged, pg 32
         if new_rating >= 0:
             print(f'Sleazing past barrier. Current rating {new_rating+1}; new rating {new_rating}')
         else:
-            print('Sleaze rating too low. Cannot sleaze. Aborting.')
+            print(f'Sleaze rating too low ({self.rating}). Cannot sleaze. Aborting.')
 
 class AnalyzeUtility(BaseUtility):
     '''
@@ -200,16 +200,33 @@ Source: Matrix Refragged, pg 30
         self.name = 'Monitor'
         
 
-    def monitor(self,*args):
+    def baby(self,*args):
         new_rating = self.degrade()
         if new_rating >= 0:
             print(f'Querying Overwatch. Current rating {new_rating+1}; new rating {new_rating}')
         else:
-            print('Monitor rating too low. Cannot monitor. Aborting')
+            print(f'Monitor rating too low ({self.rating}). Cannot monitor. Aborting')
 
 
-class BiofeedbackFilteringUtility(BaseUtility):
-    pass
+class BiofeedbackFilteringUtility(DegradableUtility):
+    '''
+Utility Name: Biofeedback Filtering
+Type: Degradable, Operational
+Description: A Biofeedback Filtering program may be used to soak Biofeedback Damage. Instead of applying the damage to the user’s real world condition monitor, the user may opt instead to Degrade their Biofeedback utility on a point-for-point basis.
+Source: Matrix Refragged, pg 30
+    '''
+    def __init__(self, maxrating,rating=None,*args):
+        super().__init__(maxrating,rating)
+        self.name = 'Filter'
+        
+
+    def filter(self,count,*args):
+        if count - self.rating >= 0:
+            print(f'Filtering biofeedback damage. Current rating {self.rating}; new rating {self.rating-count}')
+            for _ in range(count):
+                new_rating = self.degrade()
+        else:
+            print(f'Biofeedbac Filterback rating too low ({self.rating}). Cannot filter damage. Aborting')
 
 class BrowseUtility(BaseUtility):
     pass
@@ -283,7 +300,7 @@ Description: The Suppression program may be utilized whenever a user crashes an 
         if new_rating >= 0:
             print(f'Supressing alarm. Current rating {new_rating+1}; new rating {new_rating}')
         else:
-            print('Supression rating too low. Cannot supress alarms. Aborting.')
+            print(f'Supression rating too low ({self.rating}). Cannot supress alarms. Aborting.')
 
 
 utilities_dictionary = {
