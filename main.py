@@ -1124,7 +1124,9 @@ Source: Matrix Refragged, pg 17
     if LOGGED_IN:
         if 'baby' in ACTIVE_UTILITIES_DICTIONARY:
             ACTIVE_UTILITIES_DICTIONARY['baby'].baby()
-            
+            with distort(function=playsound,retain_modified=False) as d:
+                filepath = os.path.join(TONE_DIRECTORY,'query_overwatch.mp3')
+                d(filepath)
         display_dice(modify_rolls(args,roll_hacking(args)))
     else:
         print('User not logged in. Aborting scrub')
