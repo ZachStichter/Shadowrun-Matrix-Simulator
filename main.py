@@ -961,7 +961,7 @@ Source: Matrix Refragged, pg 16
     '''
     global LOGGED_IN
     if LOGGED_IN:
-        bonus = get_bonus(decrypt)
+        bonus = get_bonus('decrypt')
         dice = roll_hacking(args)
         modified_dice = modify_rolls(args,dice,bonus)
         display_dice(modified_dice)
@@ -1109,9 +1109,7 @@ Source: Matrix Refragged, pg 17
     bonus = get_bonus('analyze')
     if LOGGED_IN:
         rolls = roll_computer(args)
-        args.penalty -= bonus
         modified_rolls = modify_rolls(args,rolls,bonus)
-        args.penalty += bonus
         display_dice(modified_rolls)
     else:
         print('User not logged in. Aborting search')
@@ -1355,8 +1353,16 @@ Penalty: Failing this test increases the user's Overwatch by 1 point.
 Source: Matrix Refragged, pg 20
     '''
     global LOGGED_IN
+    bonus = get_bonus('jackpot')
     if LOGGED_IN:
-        display_dice(modify_rolls(args,roll_hacking(args)))
+        print('Siphoning paydata.')
+        blip()
+        print('...')
+        blip()
+        print('Downloading siphoned data.')
+        rolls = roll_hacking(args)
+        modified_rolls = modify_rolls(args,rolls,bonus)
+        display_dice(modified_rolls)
     else:
         print('User not logged in. Aborting download')
 
