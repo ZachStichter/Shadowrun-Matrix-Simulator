@@ -151,6 +151,10 @@ def configure_utilities():
             if not (line.startswith('#') or line.startswith('//') or line.startswith('::')):
                 attr,val = line.split('=')
                 attr = f'MAX_{attr.upper()}'
+                val = val.split('#')[0]
+                val = val.split('//')[0]
+                val = val.split('::')[0]
+                val = val.strip()
                 globals()[attr] = int(val)
     except IOError:
         with open(utility_file,'a+') as i:
@@ -334,13 +338,13 @@ def compare_dice(dice:list, target:int)->bool:
             return True
     return False
 
-def modify_rolls(args, rolls):
+def modify_rolls(args, rolls, bonus=0):
     '''
     Given an <args> configuration from the command line input, modify the input rolls to reflect the true value.
     '''
     modified_rolls = []
     for _ in rolls:
-        modified_rolls.append(_ - args.penalty - TORTOISE * IN_TORTOISE - HOT * IN_HOT - LIVE_COMMS * IN_LIVE_COMMS)
+        modified_rolls.append(_ - args.penalty - TORTOISE * IN_TORTOISE - HOT * IN_HOT - LIVE_COMMS * IN_LIVE_COMMS + bonus)
     return modified_rolls
 
 def roll_wrapper(args):
@@ -510,6 +514,11 @@ def enter_admin_mode(*args):
     LOGGED_IN = True
     IN_HOT = 1
     IN_TORTOISE = 0
+
+def get_bonus(utility_name):
+    global ACTIVE_UTILITIES_DICTIONARY
+    if utility_name in ACTIVE_UTILITIES_DICTIONARY.keys():
+        return ACTIVE_UTILITIES_DICTIONARY[utility_name].get_bonus()
 
 #################################################################################################################################
 #                                                                                                                               #
@@ -936,7 +945,7 @@ Source: Matrix Refragged, pg 16
 '''
     global LOGGED_IN
     if LOGGED_IN:
-        display_dice(roll_computer(args))
+        display_dice(modify_rolls(args,roll_computer(args)))
     else:
         print('User not logged in. Aborting configuration')
 
@@ -952,7 +961,10 @@ Source: Matrix Refragged, pg 16
     '''
     global LOGGED_IN
     if LOGGED_IN:
-        display_dice(roll_hacking(args))
+        bonus = get_bonus(decrypt)
+        dice = roll_hacking(args)
+        modified_dice = modify_rolls(args,dice,bonus)
+        display_dice(modified_dice)
     else:
         print('User not logged in. Aborting decryption')
     
@@ -968,7 +980,7 @@ Source: Matrix Refragged, pg 16
     '''
     global LOGGED_IN
     if LOGGED_IN:
-        display_dice(roll_computer(args))
+        display_dice(modify_rolls(args,roll_computer(args)))
     else:
         print('User not logged in. Aborting jamming')
 
@@ -983,7 +995,7 @@ Source: Matrix Refragged, pg 16
     '''
     global LOGGED_IN
     if LOGGED_IN:
-        display_dice(roll_computer(args))
+        display_dice(modify_rolls(args,roll_computer(args)))
     else:
         print('User not logged in. Aborting jump')
 
@@ -1063,7 +1075,7 @@ Source: Matrix Refragged, pg 17
     '''
     global LOGGED_IN
     if LOGGED_IN:
-        display_dice(roll_computer(args))
+        display_dice(modify_rolls(args,roll_computer(args)))
     else:
         print('User not logged in. Aborting boot')
 
@@ -1079,7 +1091,7 @@ Source: Matrix Refragged, pg 17
     '''
     global LOGGED_IN
     if LOGGED_IN:
-        display_dice(roll_hacking(args))
+        display_dice(modify_rolls(args,roll_hacking(args)))
     else:
         print('User not logged in. Aborting scrub')
 
@@ -1094,11 +1106,13 @@ Source: Matrix Refragged, pg 17
     '''
     global LOGGED_IN
     global ACTIVE_UTILITIES_DICTIONARY
-    if 'analyze' in ACTIVE_UTILITIES_DICTIONARY.keys():
-        bonus = ACTIVE_UTILITIES_DICTIONARY['analyze'].get_bonus()
-        print(bonus)
+    bonus = get_bonus('analyze')
     if LOGGED_IN:
-        display_dice(roll_computer(args))
+        rolls = roll_computer(args)
+        args.penalty -= bonus
+        modified_rolls = modify_rolls(args,rolls,bonus)
+        args.penalty += bonus
+        display_dice(modified_rolls)
     else:
         print('User not logged in. Aborting search')
 
@@ -1113,7 +1127,7 @@ Source: Matrix Refragged, pg 17
     '''
     global LOGGED_IN
     if LOGGED_IN:
-        display_dice(roll_computer(args))
+        display_dice(modify_rolls(args,roll_computer(args)))
     else:
         print('User not logged in. Aborting transmission')
 
@@ -1192,7 +1206,7 @@ Source: Matrix Refragged, pg 18
 
     global LOGGED_IN
     if LOGGED_IN:
-        display_dice(roll_computer(args))
+        display_dice(modify_rolls(args,roll_computer(args)))
     else:
         print('User not logged in. Aborting trace')
 
@@ -1210,7 +1224,7 @@ Source: Matrix Refragged, pg 18
 
     global LOGGED_IN
     if LOGGED_IN:
-        display_dice(roll_hacking(args))
+        display_dice(modify_rolls(args,roll_hacking(args)))
     else:
         print('User not logged in. Aborting configuration')
 
@@ -1228,7 +1242,7 @@ Source: Matrix Refragged, pg 18
 
     global LOGGED_IN
     if LOGGED_IN:
-        display_dice(roll_hacking(args))
+        display_dice(modify_rolls(args,roll_hacking(args)))
     else:
         print('User not logged in. Aborting jamming')
 
@@ -1245,7 +1259,7 @@ Source: Matrix Refragged, pg 18
     '''
     global LOGGED_IN
     if LOGGED_IN:
-        display_dice(roll_hacking(args))
+        display_dice(modify_rolls(args,roll_hacking(args)))
     else:
         print('User not logged in. Aborting configuration')
 
@@ -1262,7 +1276,7 @@ Source: Matrix Refragged, pg 19
     '''
     global LOGGED_IN
     if LOGGED_IN:
-        display_dice(roll_hacking(args))
+        display_dice(modify_rolls(args,roll_hacking(args)))
     else:
         print('User not logged in. Aborting reboot')
 
@@ -1278,7 +1292,7 @@ Source: Matrix Refragged, pg 19
     '''
     global LOGGED_IN
     if LOGGED_IN:
-        display_dice(roll_computer(args))
+        display_dice(modify_rolls(args,roll_computer(args)))
     else:
         print('User not logged in. Aborting read operation')
 
@@ -1294,7 +1308,7 @@ Source: Matrix Refragged, pg 19
     '''
     global LOGGED_IN
     if LOGGED_IN:
-        display_dice(roll_hacking(args))
+        display_dice(modify_rolls(args,roll_hacking(args)))
     else:
         print('User not logged in. Aborting download')
 
@@ -1311,7 +1325,7 @@ Source: Matrix Refragged, pg 19
     '''
     global LOGGED_IN
     if LOGGED_IN:
-        display_dice(roll_hacking(args))
+        display_dice(modify_rolls(args,roll_hacking(args)))
     else:
         print('User not logged in. Aborting upload')
 
@@ -1326,7 +1340,7 @@ Source: Matrix Refragged, pg 19
     '''
     global LOGGED_IN
     if LOGGED_IN:
-        display_dice(roll_computer(args))
+        display_dice(modify_rolls(args,roll_computer(args)))
     else:
         print('User not logged in. Aborting index')
 
@@ -1342,7 +1356,7 @@ Source: Matrix Refragged, pg 20
     '''
     global LOGGED_IN
     if LOGGED_IN:
-        display_dice(roll_hacking(args))
+        display_dice(modify_rolls(args,roll_hacking(args)))
     else:
         print('User not logged in. Aborting download')
 
@@ -1357,7 +1371,7 @@ Source: Matrix Refragged, pg 20
     '''
     global LOGGED_IN
     if LOGGED_IN:
-        display_dice(roll_computer(args))
+        display_dice(modify_rolls(args,roll_computer(args)))
     else:
         print('User not logged in. Aborting control command')
 
@@ -1371,7 +1385,7 @@ Description: This prompt allows the user to call up an ARO index of all icons, o
     '''
     global LOGGED_IN
     if LOGGED_IN:
-        display_dice(roll_computer(args))
+        display_dice(modify_rolls(args,roll_computer(args)))
     else:
         print('User not logged in. Aborting index')
 
@@ -1388,7 +1402,7 @@ Source: Matrix Refragged, pg 20
     '''
     global LOGGED_IN
     if LOGGED_IN:
-        display_dice(roll_hacking(args))
+        display_dice(modify_rolls(args,roll_hacking(args)))
     else:
         print('User not logged in. Aborting spoof')
 
@@ -1406,7 +1420,7 @@ Source: Matrix Refragged, pg 20
 
     global LOGGED_IN
     if LOGGED_IN:
-        display_dice(roll_hacking(args))
+        display_dice(modify_rolls(args,roll_hacking(args)))
     else:
         print('User not logged in. Aborting tap')
 
@@ -1421,7 +1435,7 @@ Source: Matrix Refragged, pg 21
     '''
     global LOGGED_IN
     if LOGGED_IN:
-        display_dice(roll_computer(args))
+        display_dice(modify_rolls(args,roll_computer(args)))
     else:
         print('User not logged in. Aborting index')
 
@@ -1436,7 +1450,7 @@ Source: Matrix Refragged, pg 21
     '''
     global LOGGED_IN
     if LOGGED_IN:
-        display_dice(roll_computer(args))
+        display_dice(modify_rolls(args,roll_computer(args)))
     else:
         print('User not logged in. Aborting index')
 
@@ -1451,7 +1465,7 @@ Source: Matrix Refragged, pg 21
     '''
     global LOGGED_IN
     if LOGGED_IN:
-        display_dice(roll_computer(args))
+        display_dice(modify_rolls(args,roll_computer(args)))
     else:
         print('User not logged in. Aborting mapping operation')
 
@@ -1466,7 +1480,7 @@ Source: Matrix Refragged, pg 22
     '''
     global LOGGED_IN
     if LOGGED_IN:
-        display_dice(roll_computer(args))
+        display_dice(modify_rolls(args,roll_computer(args)))
     else:
         print('User not logged in. Aborting comment')
 
@@ -1481,7 +1495,7 @@ Source: Matrix Refragged, pg 22
     '''
     global LOGGED_IN
     if LOGGED_IN:
-        display_dice(roll_computer(args))
+        display_dice(modify_rolls(args,roll_computer(args)))
     else:
         print('User not logged in. Aborting query')
 
@@ -1664,6 +1678,10 @@ class ActionHandler:
         elif command in ACTIVE_UTILITIES_DICTIONARY:
             if args[0].message != []:
                 if args[0].command in ['attack']:
+                    args = args[0]
+                    util_command = args.message[0]
+                    util_args = args.message[1:]
+                elif args[0].message[0] in ['set_rating']:
                     args = args[0]
                     util_command = args.message[0]
                     util_args = args.message[1:]
