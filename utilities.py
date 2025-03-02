@@ -1,3 +1,5 @@
+DECRYPT_BONUS = 0
+
 class BaseUtility():
     '''
 A basic utility class. All other utilities inherit from this. This docstring should not be visible in the live environment.
@@ -233,7 +235,17 @@ class BrowseUtility(BaseUtility):
     pass
 
 class DecryptUtility(BaseUtility):
-    pass
+    '''
+Name: Decrypt
+Type: Offensive
+Description: A Decrypt program decreases the user’s target number by its rating while utilizing the Crack Protections prompt to decode an Encrypted target. Base Decrypt time = (Encrypt Rating x10 minutes).
+Source: Matrix Refragged, pg 30
+    '''
+    def __init__(self,maxrating,rating=None,*args):
+        global DECRYPT_BONUS
+        super().__init__(maxrating,rating)
+        self.name = 'Decrypt'
+        DECRYPT_BONUS = self.rating
 
 class EncryptUtility(BaseUtility):
     pass
@@ -345,5 +357,5 @@ utilities_dictionary = {
 attacks_list = ['lol','mol','sol','dol','nosebleed','blackout','killjoy','blackhammer']
 
 if __name__ == '__main__':
-    temp = SleazeUtility()
+    temp = SleazeUtility(6)
     temp.sleaze()
