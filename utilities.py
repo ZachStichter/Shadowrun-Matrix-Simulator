@@ -97,8 +97,26 @@ Source: Matrix Refragged, pg 30
         self.name='Analyze'
         self.initialized = True
 
-class ArmorUtility(BaseUtility):
-    pass
+class ArmorUtility(DegradableUtility):
+    '''
+Utility Name: Armor
+Type: Operational, Degradable
+Description: An Armor program may be used to soak Overload Damage. Instead of applying the damage to the user’s Matrix condition monitor, the user may opt instead to Degrade their Armor utility on a point-for-point basis.
+Source: Matrix Refragged, pg 30
+    '''
+    def __init__(self, maxrating,rating=None,*args):
+        super().__init__(maxrating,rating)
+        self.name = 'Armor'
+        
+
+    def armor(self,count,*args):
+        count = int(count[0])
+        if count - self.rating >= 0:
+            print(f'Blocking overload damage. Current rating {self.rating}; new rating {self.rating-count}')
+            for _ in range(count):
+                new_rating = self.degrade()
+        else:
+            print(f'Armor rating too low ({self.rating}). Cannot filter damage. Aborting')
 
 class AttackUtility(BaseUtility):
     '''
@@ -231,6 +249,9 @@ Source: Matrix Refragged, pg 30
             print(f'Biofeedback Filterback rating too low ({self.rating}). Cannot filter damage. Aborting')
 
 class BrowseUtility(BaseUtility):
+    '''
+
+    '''
     pass
 
 class DecryptUtility(BaseUtility):
@@ -240,22 +261,66 @@ Type: Offensive
 Description: A Decrypt program decreases the user’s target number by its rating while utilizing the Crack Protections prompt to decode an Encrypted target. Base Decrypt time = (Encrypt Rating x10 minutes).
 Source: Matrix Refragged, pg 30
     '''
-    def __init__(self,maxrating,rating=None,*args):
-        global DECRYPT_BONUS
-        super().__init__(maxrating,rating)
+    def __init__(self,rating,*args):
+        super().__init__()
         self.name = 'Decrypt'
+        self.rating=rating
 
 class EncryptUtility(BaseUtility):
-    pass
+    '''
+Name: Encrypt
+Type: Operational
+Description: An Encrypt program is an operational program designed to Encrypt a target (usually a datafile or datastream). Whenever the user successfully utilizes the Configure Protections prompt, they may choose to Encrypt the target up to the rating of the utility. A single success is all that’s required to complete the action.
+Source: Matrix Refragged, pg 31
+    '''
+    def __init__(self,rating,*args):
+        super().__init__()
+        self.name = 'Encrypt'
+        self.rating=rating
 
-class EvasionUtility(BaseUtility):
-    pass
+class EvasionUtility(DegradableUtility):
+    '''
+Name: Evasion
+Type: Degradable, Operational
+Description: An Evasion program allows the user to utilize the Toggle Visibility prompt to become Hidden, evenwhile currently Link-Locked. As a Degradable program, Evasion is reduced by 1 point after each use.
+Source: Matrix Refragged, pg 31
+    '''
+    def __init__(self,maxrating,rating=None,*args):
+        super().__init__(maxrating,rating)
+        self.name='Evasion'
+
+    def evasion(self,*args):
+        new_rating = self.degrade()
+        if new_rating >= 0:
+            print(f'Toggling visibility to hidden. Current rating {new_rating+1}; new rating {new_rating}')
+        else:
+            print(f'Evasion rating too low ({self.rating}). Cannot evade link lock. Aborting')
 
 class ExploitUtility(BaseUtility):
     pass
 
-class JackpotUtility(BaseUtility):
-    pass
+class JackpotUtility(DegradableUtility):
+    '''
+Name: Jackpot
+Type: Degradable, Operational
+Description: A Jackpot program decreases the user’s target number by its rating while utilizing the Siphon Paydata prompt. As a Degradable program, Jackpot is reduced by 1 point after each use.
+Source: Matrix Refragged, pg
+    '''
+    def __init__(self,maxrating, rating=None,*args):
+        super().__init__(maxrating,rating)
+        self.name='Jackpot'
+
+    def jackpot(self,*args):
+        new_rating = self.degrade()
+        if new_rating >= 0:
+            print(f'Enabling the Judiciously Acquiring Contraband Knowledge Protocol on Terminal (J.A.C.K.P.O.T.). Current rating {new_rating+1}; new rating {new_rating}')
+        else:
+            print(f'Jackpot rating too low ({self.rating}). Cannot boost siphon operations.')
+    
+    def get_bonus(self):
+        bonus = self.rating
+        self.jackpot()
+        return bonus
 
 class JamboreeUtility(BaseUtility):
     pass
