@@ -480,6 +480,22 @@ def log_to_disk(fstring,filename):
     with open(filepath,'a+') as o:
         o.write(fstring)
 
+def print_dictionary_keys(keys):
+    print_string = ', '.join(keys)
+    with wrap():
+        print(print_string)
+
+def list_command_options(action_handler):
+    print('Available Matrix Commands:')
+    keys = sorted(action_handler.actions.keys())
+    print_dictionary_keys(keys)
+    print('\nKnown Utilities:')
+    keys = sorted(utilities.utilities_dictionary.keys())
+    print_dictionary_keys(keys)
+    keys = sorted(ACTIVE_UTILITIES_DICTIONARY.keys())
+    if len(keys) >0:
+        print('\nBooted Utilities:')
+        print_dictionary_keys(keys)
 
 #################################################################################################################################
 #                                                                                                                               #
@@ -1474,6 +1490,7 @@ def boot_utilities(successes, args):
     global ACTIVE_UTILITIES_DICTIONARY
     booted = 0
     utilities_dictionary = utilities.utilities_dictionary
+    boot_success = []
     for arg in args.message:
         if ':' in arg:
             arg,rating = arg.split(":")
@@ -1488,6 +1505,7 @@ def boot_utilities(successes, args):
                     method(rating)
                 ACTIVE_UTILITIES_DICTIONARY[arg] = util
                 booted += 1
+                boot_success.append(arg)
             except KeyError as e:
                 print(f'Unable to load utility {arg}. No valid {e} in the utilities.txt file. Add that and restart the shell.')
         elif booted >= successes:
@@ -1496,6 +1514,10 @@ def boot_utilities(successes, args):
             print(f'Utility not found {arg}. Skipping.')
     if debug:
         print(ACTIVE_UTILITIES_DICTIONARY)
+    print_keys = sorted(boot_success)
+    if len(boot_success) >0:
+        print('Successfully booted the following utilities:')
+        print_dictionary_keys(boot_success)
 
 
 
@@ -1654,7 +1676,6 @@ def create_parser():
     '''
     parser = argparse.ArgumentParser(description=f"Shadowrun Matrix Terminal Adapter v{version}. Allows direct access to the matrix.")
     
-    # Example of defining commands with arguments
     parser.add_argument('command', nargs=1,type=str, help="The command to run")
     parser.add_argument('-v', '--verbose', action='store_true', help="Verbose output")
     parser.add_argument('-d', '--dice', default=0,type=int)
@@ -1676,6 +1697,7 @@ def main():
     '''
     Main event loop
     '''
+    global LOGGED_IN
     from env_manager import load_dotenv
     load_dotenv()
     configure_globals()
@@ -1688,30 +1710,23 @@ def main():
     
     while True:
         # Accept structured user input
-        user_input = input("[drpepper@pepperPAN ~]$ ").lower()
+        if LOGGED_IN:
+            input_string = "[drpepper@pepperPAN ~]$ "
+        else:
+            input_string = "> "
+        user_input = input(input_string).lower()
         if debug and user_input == "test_documentation":
             test_documentation()
             break
-
         # Exit condition
         if user_input == 'exit':
-            action_handler.perform_action('exit')
             break
-
         elif user_input == 'ls':
-            print('Available Matrix Commands:')
-            # for key in action_handler.actions.keys():
-            #     print(key,'\n')
-            keys = sorted(action_handler.actions.keys())
-            print_string = ', '.join(keys)
-            with wrap():
-                print(print_string)
+            list_command_options(action_handler)
         else:
             try:
                 # Parse the user input as command-line arguments
                 args = parser.parse_args(user_input.split())
-                # if debug:
-                #     print(args)
                 returnCode = action_handler.perform_action(args.command,args)
                 if returnCode != None:
                     print(returnCode)
@@ -1721,8 +1736,8 @@ def main():
                     sys.exit()
                 else:
                     print('\n')
-            #except Exception as e:
-            #    print(f'Unknown error occurred: {e}')
+            except Exception as e:
+               print(f'Unknown error occurred: {e}')
 
 if __name__ == "__main__":
     main()
