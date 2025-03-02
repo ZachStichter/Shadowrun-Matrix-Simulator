@@ -148,9 +148,10 @@ def configure_utilities():
         with open(utility_file,'r') as i:
             lines = i.readlines()
         for line in lines:
-            attr,val = line.split('=')
-            attr = f'MAX_{attr.upper()}'
-            globals()[attr] = int(val)
+            if not (line.startswith('#') or line.startswith('//') or line.startswith('::')):
+                attr,val = line.split('=')
+                attr = f'MAX_{attr.upper()}'
+                globals()[attr] = int(val)
     except IOError:
         with open(utility_file,'a+') as i:
             pass
@@ -405,12 +406,13 @@ def roll_initiative(args):
     elif not LOGGED_IN and not args.matrix:
         dice = roll_dice(MEAT_INITIATIVE)
     else:
+        # todo: fix this. it's so ugly
         global silent_mode
         global fast_mode
         global IN_HOT
         global IN_TORTOISE
         import copy
-        print('Rolling meat initiative even though you"re logged in')
+        print("Rolling meat initiative even though you're logged in")
         local_args = copy.deepcopy(args)
         if bool(IN_HOT):
             local_args.login_type = 'hot'
