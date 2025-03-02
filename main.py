@@ -499,6 +499,18 @@ def list_command_options(action_handler):
         print('\nBooted Utilities:')
         print_dictionary_keys(keys)
 
+def enter_admin_mode(*args):
+    global silent_mode
+    global fast_mode
+    global LOGGED_IN
+    global IN_HOT
+    global IN_TORTOISE
+    silent_mode = True
+    fast_mode = True
+    LOGGED_IN = True
+    IN_HOT = 1
+    IN_TORTOISE = 0
+
 #################################################################################################################################
 #                                                                                                                               #
 #                                                                                                                               #
@@ -1634,7 +1646,8 @@ class ActionHandler:
             'init':roll_initiative,
             'converse': converse_with_friday,
             'history': display_conversation_history,
-            'listen': auditory_conversation
+            'listen': auditory_conversation,
+            'admin': enter_admin_mode
         }
 
     # Function to perform action based on command
@@ -1695,7 +1708,7 @@ def create_parser():
     return parser
 
 # Main function to handle user input and invoke actions
-def main():
+def main(*args):
     '''
     Main event loop
     '''
@@ -1704,6 +1717,8 @@ def main():
     load_dotenv()
     configure_globals()
     action_handler = ActionHandler()
+    if args and args[0] == 'admin':
+        action_handler.perform_action(('admin',))
     if not debug:
         startup()
     configure_character()
@@ -1742,4 +1757,7 @@ def main():
                print(f'Unknown error occurred: {e}')
 
 if __name__ == "__main__":
-    main()
+    if sys.argv[:-1] == 'admin':
+        main('admin')
+    else:
+        main()
