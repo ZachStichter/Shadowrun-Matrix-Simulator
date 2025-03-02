@@ -21,6 +21,8 @@ from llm_manager import llm_manager
 from quash_print_output import quash_print_output
 from wrap_to_console import wrap
 import utilities
+import common_functions
+import defense_actions
 
 with quash_print_output():
     import pygame # gives some unpretty import messages. would be fine in most applications, but I am delivering in the shell, and I want to strictly control the UX
@@ -515,13 +517,6 @@ def enter_admin_mode(*args):
     IN_HOT = 1
     IN_TORTOISE = 0
 
-def get_bonus(utility_name):
-    global ACTIVE_UTILITIES_DICTIONARY
-    if utility_name in ACTIVE_UTILITIES_DICTIONARY.keys():
-        return ACTIVE_UTILITIES_DICTIONARY[utility_name].get_bonus()
-    else:
-        return 0
-
 #################################################################################################################################
 #                                                                                                                               #
 #                                                                                                                               #
@@ -704,10 +699,13 @@ def get_longitude():
     '''
     return f'{(random.random()*(-122.373413+122.248142)-122.248142):.9}'
 
-def display_dice(dice):
+def display_dice(dice, bonus=None):
     '''
     Print the result of a set of dice rolls and play audio telling the user the result
     '''
+    if bonus:
+        with wrap():
+            print(f'These rolls include a bonus of {bonus}. If this roll is being used to overcome a target number, make sure the bonus does not effectively lower the target number below 2.')
     print(sorted(dice,reverse=True))
     playsound(BEST_ROLL)
     best = max(dice)
@@ -868,7 +866,7 @@ Source: Matrix Refragged, pg 16
     '''
     global LOGGED_IN
     global NODE_LOCATION
-    bonus = get_bonus('exploit')
+    bonus = common_functions.get_bonus('exploit')
     if LOGGED_IN:
         candidate_node = "".join(random.choice(string.ascii_letters + string.digits) for _ in range(10)).upper()
         print(f'Accessing node {candidate_node}')
@@ -961,13 +959,16 @@ Skill Name: Crack Protections
 Type: General
 Time: Complex
 Skill Check: Passcodes or Hacking vs [Sys + Rating of active protections]/sec
-Description: This prompt targets a Visible icon (usually a datafile or datastream), allowing the user to decipher Encrypted datafiles, disarm Databombs, or thwart other forms of protection associated with the target icon. Cracking protections requires a base time of (Encryption Rating x 10 Minutes). Extra successes can be used to shorten that time. To complete this action, the user must generate at least one success on the test; otherwise, the protection remains in effect. Failure to disarm a Databomb results in the file's immediate deletion (Sysops can later recover these from a secure backup). The Decrypt, and Kill Switch utilities can improve a user's chance of successfully utilizing this prompt to decipher Encryption or disable a Databomb, respectively. 
+Description: This prompt targets a Visible icon (usually a datafile or datastream), allowing the user to decipher Encrypted datafiles, disarm Databombs, or thwart other forms of protection associated with the target icon. Cracking protections requires a base time of (Encryption Rating x 10 Minutes). Extra successes can be used to shorten that time. To complete this action, the user must generate at least one success on the test; otherwise, the protection remains in effect. Failure to disarm a Databomb results in the file's immediate deletion (Sysops can later recover these from a secure backup). The Decrypt and Kill Switch utilities can improve a user's chance of successfully utilizing this prompt to decipher Encryption or disable a Databomb, respectively. 
 Penalty: Failing this test increases the user's Overwatch by 1 point.
+Usage: crack_protections [decrypt, killswitch]. If neither is selected, crack protections with no utility bonus.
 Source: Matrix Refragged, pg 16
     '''
     global LOGGED_IN
     if LOGGED_IN:
-        bonus = get_bonus('decrypt')
+        if args.message[0] in ['decrypt', 'killswitch']:
+            print(f'Cracking protections with {args.message[0]} utility.')
+            bonus = common_functions.get_bonus(args.message[0])
         dice = roll_hacking(args)
         modified_dice = modify_rolls(args,dice,bonus)
         display_dice(modified_dice)
@@ -986,7 +987,10 @@ Source: Matrix Refragged, pg 16
     '''
     global LOGGED_IN
     if LOGGED_IN:
-        display_dice(modify_rolls(args,roll_computer(args)))
+        bonus = common_functions.get_bonus('jamboree')
+        rolls = roll_computer(args)
+        modified_rolls = modify_rolls(args, rolls, bonus)
+        display_dice(modified_rolls)
     else:
         print('User not logged in. Aborting jamming')
 
@@ -1081,7 +1085,10 @@ Source: Matrix Refragged, pg 17
     '''
     global LOGGED_IN
     if LOGGED_IN:
-        display_dice(modify_rolls(args,roll_computer(args)))
+        bonus = common_functions.get_bonus('medic')
+        rolls = roll_computer(args)
+        modified_rolls = modify_rolls(args,rolls,bonus)
+        display_dice(modified_rolls,bonus)
     else:
         print('User not logged in. Aborting boot')
 
@@ -1112,7 +1119,7 @@ Source: Matrix Refragged, pg 17
     '''
     global LOGGED_IN
     global ACTIVE_UTILITIES_DICTIONARY
-    bonus = get_bonus('analyze')
+    bonus = common_functions.get_bonus('analyze')
     if LOGGED_IN:
         rolls = roll_computer(args)
         modified_rolls = modify_rolls(args,rolls,bonus)
@@ -1207,10 +1214,14 @@ Description: This prompt allows the user to target an icon, and attempt to trace
     - The GPS coordinates or I/O address of the user's real-world, wireless access, or jackpoint.
 Source: Matrix Refragged, pg 18
     '''
-
     global LOGGED_IN
     if LOGGED_IN:
-        display_dice(modify_rolls(args,roll_computer(args)))
+        bonus = common_functions.get_bonus('lockon')
+        if bonus > 0:
+            print('Lock-On utility activated. Attempting to link lock target. Any successes establish link lock.')
+        rolls = roll_computer(args)
+        modified_rolls = modify_rolls(args,rolls,bonus)
+        display_dice(modified_rolls)
     else:
         print('User not logged in. Aborting trace')
 
@@ -1343,7 +1354,7 @@ Description: This prompt calls up an ARO index of all datafiles (or other digita
 Source: Matrix Refragged, pg 19
     '''
     global LOGGED_IN
-    bonus = get_bonus('browse')
+    bonus = common_functions.get_bonus('browse')
     if LOGGED_IN:
         rolls = roll_computer(args)
         modified_rolls = modify_rolls(args,rolls,bonus)
@@ -1362,7 +1373,7 @@ Penalty: Failing this test increases the user's Overwatch by 1 point.
 Source: Matrix Refragged, pg 20
     '''
     global LOGGED_IN
-    bonus = get_bonus('jackpot')
+    bonus = common_functions.get_bonus('jackpot')
     if LOGGED_IN:
         print('Siphoning paydata.')
         blip()
@@ -1399,7 +1410,7 @@ Skill Check: Computer vs System Rating
 Description: This prompt allows the user to call up an ARO index of all icons, or subscribed devices slaved to the system's PAN, or otherwise controlled by the node. With a single success the user indexes the content of the node, listing the names and critical details of every Visible icon associated with the node. With two successes, Hidden device icons, as well as their associated datastreams and sub-systems become visible to the user (ie. the SANs of the subscribed devices). The Browse utility can improve a user's chance of successfully utilizing this prompt.
     '''
     global LOGGED_IN
-    bonus = get_bonus('browse')
+    bonus = common_functions.get_bonus('browse')
     if LOGGED_IN:
         rolls = roll_computer(args)
         modified_rolls = modify_rolls(args,rolls,bonus)
@@ -1452,7 +1463,7 @@ Description: This prompt allows the user to call up an index of all users curren
 Source: Matrix Refragged, pg 21
     '''
     global LOGGED_IN
-    bonus = get_bonus('browse')
+    bonus = common_functions.get_bonus('browse')
     if LOGGED_IN:
         rolls = roll_computer(args)
         modified_rolls = modify_rolls(args,rolls,bonus)
@@ -1470,7 +1481,7 @@ Description: This prompt allows the user to call up an index of all users curren
 Source: Matrix Refragged, pg 21
     '''
     global LOGGED_IN
-    bonus = get_bonus('browse')
+    bonus = common_functions.get_bonus('browse')
     if LOGGED_IN:
         rolls = roll_computer(args)
         modified_rolls = modify_rolls(args,rolls,bonus)
@@ -1718,6 +1729,9 @@ class ActionHandler:
                 util_args = []
             command_action = getattr(ACTIVE_UTILITIES_DICTIONARY[command],util_command)
             command_action(util_args)
+        elif command in defense_actions.DEFENSE_ACTIONS_DICTIONARY:
+            command_action = defense_actions.DEFENSE_ACTIONS_DICTIONARY[command]
+            command_action(ACTIVE_UTILITIES_DICTIONARY)
         else:
             return "Invalid command. Try again."
 
