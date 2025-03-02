@@ -7,3 +7,5 @@ __pycache__
 /Shadowrun-Env
 clean_description.py
 /.vscode
+README.md
+/.venv
