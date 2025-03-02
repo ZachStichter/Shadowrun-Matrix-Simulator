@@ -504,6 +504,10 @@ def list_command_options(action_handler):
     if len(keys) >0:
         print('\nBooted Utilities:')
         print_dictionary_keys(keys)
+    print('\nOther Available Actions:')
+    keys = defense_actions.DEFENSE_ACTIONS_DICTIONARY.keys()
+    keys = sorted(keys)
+    print_dictionary_keys(keys)
 
 def enter_admin_mode(*args):
     global silent_mode
