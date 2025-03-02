@@ -250,9 +250,16 @@ Source: Matrix Refragged, pg 30
 
 class BrowseUtility(BaseUtility):
     '''
-
+Name: Browse
+Type: Offensive
+Description: A Browse program decreases the user’s target number by its rating while utilizing any Index prompts. This includes Index Data Store, Index Subscribed Devices, and Index Users and Scheduling.
+Source: Matrix Refragged, pg 30
     '''
-    pass
+    def __init__(self,rating,*args):
+        super().__init__()
+        self.name = 'Browse'
+        self.rating = rating
+
 
 class DecryptUtility(BaseUtility):
     '''
@@ -297,7 +304,10 @@ Source: Matrix Refragged, pg 31
             print(f'Evasion rating too low ({self.rating}). Cannot evade link lock. Aborting')
 
 class ExploitUtility(BaseUtility):
-    pass
+    '''
+Name: Exploit
+
+    '''
 
 class JackpotUtility(DegradableUtility):
     '''

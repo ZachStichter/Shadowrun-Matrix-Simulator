@@ -1337,8 +1337,11 @@ Description: This prompt calls up an ARO index of all datafiles (or other digita
 Source: Matrix Refragged, pg 19
     '''
     global LOGGED_IN
+    bonus = get_bonus('browse')
     if LOGGED_IN:
-        display_dice(modify_rolls(args,roll_computer(args)))
+        rolls = roll_computer(args)
+        modified_rolls = modify_rolls(args,rolls,bonus)
+        display_dice(modified_rolls)
     else:
         print('User not logged in. Aborting index')
 
@@ -1390,8 +1393,11 @@ Skill Check: Computer vs System Rating
 Description: This prompt allows the user to call up an ARO index of all icons, or subscribed devices slaved to the system's PAN, or otherwise controlled by the node. With a single success the user indexes the content of the node, listing the names and critical details of every Visible icon associated with the node. With two successes, Hidden device icons, as well as their associated datastreams and sub-systems become visible to the user (ie. the SANs of the subscribed devices). The Browse utility can improve a user's chance of successfully utilizing this prompt.
     '''
     global LOGGED_IN
+    bonus = get_bonus('browse')
     if LOGGED_IN:
-        display_dice(modify_rolls(args,roll_computer(args)))
+        rolls = roll_computer(args)
+        modified_rolls = modify_rolls(args,rolls,bonus)
+        display_dice(modified_rolls)
     else:
         print('User not logged in. Aborting index')
 
@@ -1440,8 +1446,11 @@ Description: This prompt allows the user to call up an index of all users curren
 Source: Matrix Refragged, pg 21
     '''
     global LOGGED_IN
+    bonus = get_bonus('browse')
     if LOGGED_IN:
-        display_dice(modify_rolls(args,roll_computer(args)))
+        rolls = roll_computer(args)
+        modified_rolls = modify_rolls(args,rolls,bonus)
+        display_dice(modified_rolls)
     else:
         print('User not logged in. Aborting index')
 
@@ -1455,8 +1464,11 @@ Description: This prompt allows the user to call up an index of all users curren
 Source: Matrix Refragged, pg 21
     '''
     global LOGGED_IN
+    bonus = get_bonus('browse')
     if LOGGED_IN:
-        display_dice(modify_rolls(args,roll_computer(args)))
+        rolls = roll_computer(args)
+        modified_rolls = modify_rolls(args,rolls,bonus)
+        display_dice(modified_rolls)
     else:
         print('User not logged in. Aborting index')
 
