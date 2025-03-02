@@ -303,11 +303,28 @@ Source: Matrix Refragged, pg 31
         else:
             print(f'Evasion rating too low ({self.rating}). Cannot evade link lock. Aborting')
 
-class ExploitUtility(BaseUtility):
+class ExploitUtility(DegradableUtility):
     '''
 Name: Exploit
-
+Type: Degradable, Offensive
+Description: An Exploit program decreases the user’s target number by its rating while utilizing the Access Node prompt. As a Degradable program, Exploit is reduced by 1 point after each use.
+Source: Matrix Refragged, pg 31
     '''
+    def __init__(self,maxrating, rating=None,*args):
+        super().__init__(maxrating,rating)
+        self.name='Exploit'
+
+    def exploit(self,*args):
+        new_rating = self.degrade()
+        if new_rating >= 0:
+            print(f'Found vulnerability in host node. Exploiting it now. Current rating {new_rating+1}; new rating {new_rating}')
+        else:
+            print(f'Exploit rating too low ({self.rating}). Cannot boost attack.')
+    
+    def get_bonus(self):
+        bonus = self.rating
+        self.exploit()
+        return bonus
 
 class JackpotUtility(DegradableUtility):
     '''
