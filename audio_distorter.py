@@ -1,5 +1,6 @@
 class AudioDistorter():
     def __init__(self,settings=None) -> None:
+        self.target_rms=-15
         if settings==None:
             import pedalboard
             self.settings=[
@@ -7,7 +8,8 @@ class AudioDistorter():
                       pedalboard.HighpassFilter(cutoff_frequency_hz=400),
                       pedalboard.LowpassFilter(cutoff_frequency_hz=2850),
                       pedalboard.Distortion(drive_db=17.5),
-                      pedalboard.Bitcrush()
+                      pedalboard.Bitcrush(),
+                      pedalboard.Compressor(threshold_db=self.target_rms)
                       ]
         else:
             self.settings = settings
@@ -15,6 +17,12 @@ class AudioDistorter():
     def distort(self,input_file,output_file):
         import pedalboard
         from pedalboard.io import AudioFile
+        import numpy as np
+        import soundfile as sf
+        audio,sr = sf.read(input_file)
+        current_rms = np.log(np.sqrt(np.mean(audio**2)))
+        gain_factor = self.target_rms - current_rms
+        self.settings.append(pedalboard.Gain(gain_db=gain_factor))
         board = pedalboard.Pedalboard(self.settings)
         with AudioFile(input_file) as i, AudioFile(output_file,'w',i.samplerate,i.num_channels) as o:
             while i.tell() < i.frames:
@@ -82,11 +90,10 @@ if __name__ == '__main__':
 
 
     from main import playsound
+    from os import path
     # distorter = AudioDistorter()
-    input_file = r'C:\Users\Zach\OneDrive - nd.edu\_Actual Documents\research\scripts\250201-shadowrun-matrix-emulator\tones\friday3_test.mp3'
+    input_file = path.join(path.join(path.dirname(__file__),'tones'),'friday3_test.mp3')
     # output_file = r'C:\Users\Zach\OneDrive - nd.edu\_Actual Documents\research\scripts\250201-shadowrun-matrix-emulator\tones\friday3_test_modified.mp3'
     # distorter.distort(input_file,output_file)
 
     playsound(input_file)
-    with distort(playsound,retain_modified=False) as d:
-        d(input_file)
