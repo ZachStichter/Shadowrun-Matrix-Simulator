@@ -23,7 +23,7 @@ from wrap_to_console import wrap
 import utilities
 import common_functions
 import defense_actions
-from audio_distorter import distort
+from audio_distorter import AudioDistorter
 
 with quash_print_output():
     import pygame # gives some unpretty import messages. would be fine in most applications, but I am delivering in the shell, and I want to strictly control the UX
@@ -221,13 +221,18 @@ def playsound(file_path):
     '''
     global silent_mode
     if not silent_mode:
+        distorter = AudioDistorter()
+        head,tail = os.path.splitext(file_path)
+        modified_file = head+'_modified'+tail
+        distorted_file = distorter.distort(file_path,modified_file)
         pygame.mixer.init()
-        pygame.mixer.music.load(file_path)
+        pygame.mixer.music.load(distorted_file)
         pygame.mixer.music.play()
         while pygame.mixer.music.get_busy():
             time.sleep(0.05)
         pygame.mixer.music.unload()
         pygame.mixer.quit()
+        os.remove(distorted_file)
 
 def get_crash_tone():
     '''
@@ -590,9 +595,7 @@ def play_prompt(prompt):
         mgr.generate(prompt,filepath)
         del mgr
         print(f'Response received. Playing audio.')
-        with distort(function=playsound,retain_modified=False) as d:
-            d(filepath)
-        os.remove(filepath)
+        playsound(filepath)
     else:
         print('Audio silenced. Cancelling audio generation.')
 
@@ -711,19 +714,18 @@ def display_dice(dice, bonus=-1):
         with wrap():
             print(f'These rolls include a bonus of {bonus}. If this roll is being used to overcome a target number, make sure the bonus does not effectively lower the target number below 2.')
     print(sorted(dice,reverse=True))
-    with distort(function=playsound,retain_modified=False) as dplaysound:
-        dplaysound(BEST_ROLL)
-        best = max(dice)
-        numbers = os.path.join(TONE_DIRECTORY, 'numerals')
-        if best < 20:
-            path = os.path.join(numbers,f'{int(best):02}.mp3')
-            dplaysound(path)
-        else:
-            tens = str(best)[0]
-            ones = str(best)[1]
-            path = os.path.join(numbers,f'{int(tens)*10:02}.mp3')
-            dplaysound(path)
-            path = os.path.join(numbers,f'{int(ones):02}.mp3')
+    playsound(BEST_ROLL)
+    best = max(dice)
+    numbers = os.path.join(TONE_DIRECTORY, 'numerals')
+    if best < 20:
+        path = os.path.join(numbers,f'{int(best):02}.mp3')
+        playsound(path)
+    else:
+        tens = str(best)[0]
+        ones = str(best)[1]
+        path = os.path.join(numbers,f'{int(tens)*10:02}.mp3')
+        playsound(path)
+        path = os.path.join(numbers,f'{int(ones):02}.mp3')
 
 def system_crash(args, msg='System crash. Prepare for dumpshock.'):
     '''
@@ -1043,7 +1045,6 @@ Source: Matrix Refragged, pg 17, (Types: pg 15)
         node = '.'.join([''.join(random.choice(string.digits) for _ in range(3)),''.join(random.choice(string.digits) for _ in range(3)),random.choice(string.digits),random.choice(string.digits)])
         print(f"Attempting login as {user} at location {node}")
         play_connection_line(user, node)
-
         global IN_TORTOISE
         global IN_HOT
         global COMPUTER
@@ -1124,9 +1125,7 @@ Source: Matrix Refragged, pg 17
     if LOGGED_IN:
         if 'baby' in ACTIVE_UTILITIES_DICTIONARY:
             ACTIVE_UTILITIES_DICTIONARY['baby'].baby()
-            with distort(function=playsound,retain_modified=False) as d:
-                filepath = os.path.join(TONE_DIRECTORY,'query_overwatch.mp3')
-                d(filepath)
+            playsound(filepath)
         display_dice(modify_rolls(args,roll_hacking(args)))
     else:
         print('User not logged in. Aborting scrub')
