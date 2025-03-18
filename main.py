@@ -94,6 +94,9 @@ def resolve_expression(key, expression):
     elif expression.startswith('[') and expression.endswith(']'):
         items = expression[1:-1].split(',')
         stripped_items = [i.strip() for i in items]
+        for idx, item in enumerate(stripped_items):
+            if item in globals():
+                stripped_items[idx] = globals()[item]
         globals()[key] = stripped_items
     elif expression.isnumeric():
         try:
@@ -465,10 +468,11 @@ def roll_initiative(args):
     display_dice(adj)
 
 def captains_log(args):
-    import multiprocessing
-    with quash_print_output():
-        process = multiprocessing.Process(target=query_for_log, args=(args,))
-        process.start()
+    # import multiprocessing
+    # with quash_print_output():
+    #     process = multiprocessing.Process(target=query_for_log, args=(args,))
+    #     process.start()
+    query_for_log(args)
 
 def query_for_log(args):
     from time import time, localtime, asctime
@@ -591,11 +595,13 @@ def play_prompt(prompt):
     if debug:
         print(silent_mode)
     if not silent_mode:
-        mgr = tts_manager()
-        mgr.generate(prompt,filepath)
-        del mgr
-        print(f'Response received. Playing audio.')
+        with quash_print_output():
+            mgr = tts_manager()
+            mgr.generate(prompt,filepath)
+            del mgr
+        input(f'Response received. Playing audio on your mark.')
         playsound(filepath)
+        os.remove(filepath)
     else:
         print('Audio silenced. Cancelling audio generation.')
 
