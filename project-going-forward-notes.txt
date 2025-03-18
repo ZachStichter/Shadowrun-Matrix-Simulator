@@ -10,5 +10,15 @@ Add defense actions for each enemy IC action in srd
 
 fix any #todo: objects
 
-12 karma total; total karma pool 2
-16,000 nyen
+Current major issues:
+	generated soundfiles aren't getting removed with query
+	elevenlabs is being annoying
+	playht spawns a timer thread. need to figure out how to gracefully kill it
+	look into making tts mgr and llm mgr instantiated once?
+	for some reason playht also doesn't play well with pedalboard audiofile. need to fix that too.
+
+make a gear log and a system for entering it, and a way to view it
+
+error with unsuccessful login. `Unknown error occurred: Error opening 'UNSUCCESSFUL_DEFENSES': System error.`
+
+karma to bring us to 42
