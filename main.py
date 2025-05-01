@@ -63,8 +63,8 @@ global ACTIVE_UTILITIES_DICTIONARY
 version='0.1.0'
 
 debug = False
-silent_mode = False
-fast_mode = False
+silent_mode = True
+fast_mode = True
 
 TORTOISE = 2
 HOT = -2
@@ -362,8 +362,8 @@ def roll_wrapper(args):
     '''
 Wrapper function to interpolate between command line-style args input and the number/type style args input of roll_dice
     '''
-    dice = roll_dice(args.dice, args.dice_type)
-    print(f'Rolling {args.dice} dice.')
+    dice = roll_dice(args.dice, args.dice_type, args.noexplode)
+    print(f'Rolling {args.dice} d {args.dice_type}.')
     display_dice(dice)
 
 def toggle_link_lock(args):
@@ -1805,6 +1805,7 @@ def create_parser():
     parser.add_argument('--matrix', action='store_true')
     parser.add_argument('--friday_tts',action='store_true')
     parser.add_argument('--force',action='store_true')
+    parser.add_argument('--noexplode',action='store_false')
     parser.add_argument('message',nargs='*',default=None)
     return parser
 

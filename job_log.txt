@@ -74,3 +74,23 @@ FRIDAY: Okay, boss, updating the log: After a rough sea trip, you made it to the
 Dr. Pepper: from there we went to the aircraft carrier. on the way over, ursa took a spill into the pacific ocean, which she found quite refreshing. but otherwise we made it to the mainframe without incident. at the mainframe, though, we had another issue - an ai system currently lives in the computer, which we will deal with next week. 
 FRIDAY: Alright, Dr. Pepper, updating the log: After a rough sea trip, you made it to the ship, Blender used a grapple gun and stealth line for access, you shimmied onto the rear deck, quickly dealt with a maintenance terminal, rerouted the bots to the stern, and moved to the mainframe. You also rescued Ursa Major from the Pacific Ocean, and discovered that an AI system currently inhabits the computer.
 
+[Tue Mar 18 16:45:24 2025]
+Dr. Pepper: the ship's ai's name is delamane. he's down to help provided he can get something out of it as well 
+FRIDAY: Alright, Dr. Pepper, I'm updating the log: You made it to the ship, dealt with the maintenance terminal, rerouted the bots, rescued Ursa, and discovered an AI named Delamane currently inhabiting the computer; he's willing to help, provided he can get something out of it as well.
+
+[Tue Mar 18 16:58:23 2025]
+Dr. Pepper: satoshi wants us to get 4 elements: elemental fire from hawaii, elemental earth from the former ussr, elemental water from the pacific ocean, and elemental air from tibet 
+FRIDAY: Alright, Dr. Pepper, updating the log: Delamane is onboard to help, and Satoshi requires you to retrieve elemental fire from Hawaii, elemental earth from the former USSR, elemental water from the ocean, and elemental air from Tibet.
+
+[Tue Mar 18 16:58:54 2025]
+Dr. Pepper: after that, we need to get herzog from dublin 
+FRIDAY: Alright, Dr. Pepper, updating the log: Delamane is onboard to help, Satoshi requires you to retrieve the four elements, and you also need to get Herzog from Dublin.
+
+[Tue Mar 18 17:00:35 2025]
+Dr. Pepper: we've decided to go to tibet first. we learn that we have to summit mt everest or something like that. we can't quite get to the summit, so we'll go to his storage location near the top 
+FRIDAY: Alright, Dr. Pepper, updating the log: You're attempting to retrieve the elemental air from Tibet by climbing Mt. Everest or visiting a storage location near the top.
+
+[Tue Mar 18 19:12:44 2025]
+Dr. Pepper: after a long, difficult trek, we collected the air coins from everest 
+FRIDAY: Alright, Dr. Pepper, updating the log: You've collected the elemental air coins from Everest after a long, difficult trek.
+

@@ -22,3 +22,5 @@ make a gear log and a system for entering it, and a way to view it
 error with unsuccessful login. `Unknown error occurred: Error opening 'UNSUCCESSFUL_DEFENSES': System error.`
 
 karma to bring us to 42
+
+can incorporate up to 4 water coins into my helmet. each gives a +1 to mental attributes
